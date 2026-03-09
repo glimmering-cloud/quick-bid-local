@@ -55,10 +55,30 @@ export default function RequestDetail() {
     if (!id) return;
     const { data } = await supabase
       .from("bids")
-      .select("*, profiles!bids_provider_id_fkey(display_name, avatar_url)")
+      .select("*")
       .eq("request_id", id)
       .order("price", { ascending: true });
-    setBids((data as BidWithProfile[]) || []);
+    
+    // Fetch provider profiles separately
+    if (data && data.length > 0) {
+      const providerIds = [...new Set(data.map(b => b.provider_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", providerIds);
+      
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      const bidsWithProfiles: BidWithProfile[] = data.map(bid => ({
+        ...bid,
+        profiles: profileMap.get(bid.provider_id) ? {
+          display_name: profileMap.get(bid.provider_id)!.display_name,
+          avatar_url: profileMap.get(bid.provider_id)!.avatar_url,
+        } : null,
+      }));
+      setBids(bidsWithProfiles);
+    } else {
+      setBids([]);
+    }
   };
 
   const handleBid = async (e: React.FormEvent) => {
