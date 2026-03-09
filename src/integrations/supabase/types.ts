@@ -14,7 +14,185 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bids: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          price: number
+          provider_id: string
+          request_id: string
+          status: Database["public"]["Enums"]["bid_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          price: number
+          provider_id: string
+          request_id: string
+          status?: Database["public"]["Enums"]["bid_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          price?: number
+          provider_id?: string
+          request_id?: string
+          status?: Database["public"]["Enums"]["bid_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          bid_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          provider_id: string
+          request_id: string
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+        }
+        Insert: {
+          bid_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          provider_id: string
+          request_id: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Update: {
+          bid_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          provider_id?: string
+          request_id?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_bid_id_fkey"
+            columns: ["bid_id"]
+            isOneToOne: false
+            referencedRelation: "bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      service_requests: {
+        Row: {
+          category: string
+          created_at: string
+          customer_id: string
+          description: string | null
+          id: string
+          location_lat: number
+          location_lng: number
+          location_name: string
+          requested_time: string
+          status: Database["public"]["Enums"]["request_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          id?: string
+          location_lat: number
+          location_lng: number
+          location_name: string
+          requested_time: string
+          status?: Database["public"]["Enums"]["request_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          id?: string
+          location_lat?: number
+          location_lng?: number
+          location_name?: string
+          requested_time?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +201,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      bid_status: "pending" | "accepted" | "rejected" | "withdrawn"
+      booking_status: "confirmed" | "completed" | "cancelled"
+      request_status:
+        | "open"
+        | "bidding"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+      user_role: "customer" | "provider"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +336,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      bid_status: ["pending", "accepted", "rejected", "withdrawn"],
+      booking_status: ["confirmed", "completed", "cancelled"],
+      request_status: [
+        "open",
+        "bidding",
+        "confirmed",
+        "completed",
+        "cancelled",
+      ],
+      user_role: ["customer", "provider"],
+    },
   },
 } as const
