@@ -33,7 +33,7 @@ export default function ProviderDashboard() {
     const [{ data: reqs }, { data: bids }] = await Promise.all([
       supabase
         .from("service_requests")
-        .select("*, profiles!service_requests_customer_id_fkey(display_name)")
+        .select("*")
         .in("status", ["open", "bidding"])
         .order("created_at", { ascending: false }),
       supabase
@@ -42,7 +42,22 @@ export default function ProviderDashboard() {
         .eq("provider_id", user.id),
     ]);
 
-    setRequests((reqs as any) || []);
+    // Fetch customer profiles separately
+    const rawReqs = reqs || [];
+    if (rawReqs.length > 0) {
+      const customerIds = [...new Set(rawReqs.map(r => r.customer_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", customerIds);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      setRequests(rawReqs.map(r => ({
+        ...r,
+        profiles: profileMap.get(r.customer_id) || null,
+      })));
+    } else {
+      setRequests([]);
+    }
     setMyBidRequestIds(new Set((bids || []).map((b) => b.request_id)));
   };
 
