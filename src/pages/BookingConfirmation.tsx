@@ -19,19 +19,28 @@ export default function BookingConfirmation() {
   }, [requestId, user]);
 
   const loadBooking = async () => {
-    const { data } = await supabase
+    const { data: bookingData } = await supabase
       .from("bookings")
-      .select(`
-        *,
-        service_requests (*),
-        bids (price, message),
-        provider:profiles!bookings_provider_id_fkey (display_name, phone),
-        customer:profiles!bookings_customer_id_fkey (display_name, phone)
-      `)
+      .select("*")
       .eq("request_id", requestId!)
       .single();
 
-    setBooking(data);
+    if (!bookingData) { setLoading(false); return; }
+
+    const [{ data: request }, { data: bid }, { data: providerProfile }, { data: customerProfile }] = await Promise.all([
+      supabase.from("service_requests").select("*").eq("id", bookingData.request_id).single(),
+      supabase.from("bids").select("price, message").eq("id", bookingData.bid_id).single(),
+      supabase.from("profiles").select("display_name, phone").eq("user_id", bookingData.provider_id).single(),
+      supabase.from("profiles").select("display_name, phone").eq("user_id", bookingData.customer_id).single(),
+    ]);
+
+    setBooking({
+      ...bookingData,
+      service_requests: request,
+      bids: bid,
+      provider: providerProfile,
+      customer: customerProfile,
+    });
     setLoading(false);
   };
 
