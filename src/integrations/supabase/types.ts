@@ -17,6 +17,7 @@ export type Database = {
       bids: {
         Row: {
           created_at: string
+          estimated_wait_minutes: number | null
           id: string
           message: string | null
           price: number
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          estimated_wait_minutes?: number | null
           id?: string
           message?: string | null
           price: number
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          estimated_wait_minutes?: number | null
           id?: string
           message?: string | null
           price?: number
@@ -60,6 +63,7 @@ export type Database = {
           bid_id: string
           created_at: string
           customer_id: string
+          final_price_chf: number | null
           id: string
           provider_id: string
           request_id: string
@@ -70,6 +74,7 @@ export type Database = {
           bid_id: string
           created_at?: string
           customer_id: string
+          final_price_chf?: number | null
           id?: string
           provider_id: string
           request_id: string
@@ -80,6 +85,7 @@ export type Database = {
           bid_id?: string
           created_at?: string
           customer_id?: string
+          final_price_chf?: number | null
           id?: string
           provider_id?: string
           request_id?: string
@@ -148,6 +154,45 @@ export type Database = {
         }
         Relationships: []
       }
+      providers: {
+        Row: {
+          base_price_chf: number | null
+          business_name: string
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          rating: number | null
+          service_category: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_price_chf?: number | null
+          business_name: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          rating?: number | null
+          service_category?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_price_chf?: number | null
+          business_name?: string
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          rating?: number | null
+          service_category?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_requests: {
         Row: {
           category: string
@@ -158,6 +203,7 @@ export type Database = {
           location_lat: number
           location_lng: number
           location_name: string
+          radius_km: number | null
           requested_time: string
           status: Database["public"]["Enums"]["request_status"]
           title: string
@@ -172,6 +218,7 @@ export type Database = {
           location_lat: number
           location_lng: number
           location_name: string
+          radius_km?: number | null
           requested_time: string
           status?: Database["public"]["Enums"]["request_status"]
           title: string
@@ -186,6 +233,7 @@ export type Database = {
           location_lat?: number
           location_lng?: number
           location_name?: string
+          radius_km?: number | null
           requested_time?: string
           status?: Database["public"]["Enums"]["request_status"]
           title?: string
