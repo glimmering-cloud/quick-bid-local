@@ -109,6 +109,36 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          request_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          request_id: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          request_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -246,7 +276,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      find_matching_providers: {
+        Args: {
+          radius_km?: number
+          req_category: string
+          req_lat: number
+          req_lng: number
+        }
+        Returns: {
+          business_name: string
+          distance_km: number
+          provider_user_id: string
+        }[]
+      }
     }
     Enums: {
       bid_status: "pending" | "accepted" | "rejected" | "withdrawn"
