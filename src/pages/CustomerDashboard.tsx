@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Clock, ChevronRight, Scissors } from "lucide-react";
+import { Plus, MapPin, Clock, ChevronRight, Scissors, Banknote } from "lucide-react";
 import type { ServiceRequest } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -25,24 +24,44 @@ export default function CustomerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [bidCounts, setBidCounts] = useState<Record<string, number>>({});
+  const [lowestBids, setLowestBids] = useState<Record<string, number>>({});
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("Haircut");
   const [description, setDescription] = useState("");
   const [locationIdx, setLocationIdx] = useState(0);
   const [requestedTime, setRequestedTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const prevBidCountRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     if (!user) return;
     loadRequests();
 
     const channel = supabase
-      .channel("customer-requests")
+      .channel("customer-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "service_requests", filter: `customer_id=eq.${user.id}` }, () => loadRequests())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bids" }, (payload) => {
+        // Check if this bid is for one of our requests
+        const newBid = payload.new as any;
+        loadBidCounts().then(() => {
+          // Show toast if it's for our request
+          const isOurRequest = requests.some(r => r.id === newBid.request_id);
+          if (isOurRequest) {
+            toast("💈 New bid received!", {
+              description: `CHF ${Number(newBid.price).toFixed(0)} for your request`,
+              action: {
+                label: "View",
+                onClick: () => navigate(`/request/${newBid.request_id}`),
+              },
+            });
+          }
+        });
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user, requests.length]);
 
   const loadRequests = async () => {
     if (!user) return;
@@ -52,6 +71,30 @@ export default function CustomerDashboard() {
       .eq("customer_id", user.id)
       .order("created_at", { ascending: false });
     setRequests(data || []);
+    if (data && data.length > 0) {
+      loadBidCounts(data);
+    }
+  };
+
+  const loadBidCounts = async (reqs?: ServiceRequest[]) => {
+    const requestList = reqs || requests;
+    if (requestList.length === 0) return;
+    const requestIds = requestList.map(r => r.id);
+    const { data: bids } = await supabase
+      .from("bids")
+      .select("request_id, price")
+      .in("request_id", requestIds);
+
+    const counts: Record<string, number> = {};
+    const lowest: Record<string, number> = {};
+    (bids || []).forEach(b => {
+      counts[b.request_id] = (counts[b.request_id] || 0) + 1;
+      if (!lowest[b.request_id] || Number(b.price) < lowest[b.request_id]) {
+        lowest[b.request_id] = Number(b.price);
+      }
+    });
+    setBidCounts(counts);
+    setLowestBids(lowest);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,7 +117,6 @@ export default function CustomerDashboard() {
     if (error) {
       toast.error(error.message);
     } else {
-      // Trigger matching engine to find nearby providers
       const { data: allReqs } = await supabase
         .from("service_requests")
         .select("id")
@@ -90,7 +132,7 @@ export default function CustomerDashboard() {
         toast.success(
           count > 0
             ? `Request posted! ${count} barber${count > 1 ? "s" : ""} nearby notified.`
-            : "Request posted! No barbers nearby yet — they'll see it when they come online."
+            : "Request posted! Barbers will see it when they come online."
         );
       } else {
         toast.success("Request posted!");
@@ -197,36 +239,46 @@ export default function CustomerDashboard() {
       )}
 
       <div className="space-y-3">
-        {requests.map((req) => (
-          <Card
-            key={req.id}
-            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/20"
-            onClick={() => navigate(`/request/${req.id}`)}
-          >
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-heading font-semibold">{req.title}</h3>
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusColor(req.status)}`}>
-                    {req.status === "open" && <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" />}
-                    {req.status}
-                  </span>
+        {requests.map((req) => {
+          const count = bidCounts[req.id] || 0;
+          const lowest = lowestBids[req.id];
+          return (
+            <Card
+              key={req.id}
+              className="cursor-pointer transition-all hover:shadow-md hover:border-primary/20"
+              onClick={() => navigate(`/request/${req.id}`)}
+            >
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-heading font-semibold">{req.title}</h3>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusColor(req.status)}`}>
+                      {(req.status === "open" || req.status === "bidding") && <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" />}
+                      {req.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {req.location_name}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {format(new Date(req.requested_time), "MMM d, HH:mm")}
+                    </span>
+                    {count > 0 && (
+                      <span className="flex items-center gap-1 text-primary font-medium">
+                        <Banknote className="h-3.5 w-3.5" />
+                        {count} bid{count > 1 ? "s" : ""} · from CHF {lowest?.toFixed(0)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {req.location_name}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {format(new Date(req.requested_time), "MMM d, HH:mm")}
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
-            </CardContent>
-          </Card>
-        ))}
+                <ChevronRight className="h-5 w-5 text-muted-foreground/40" />
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
