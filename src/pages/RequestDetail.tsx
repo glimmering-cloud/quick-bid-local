@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Clock, User, ArrowLeft, Send, Check, Banknote } from "lucide-react";
+import { MapPin, Clock, User, ArrowLeft, Send, Check, Banknote, Timer } from "lucide-react";
 import type { ServiceRequest, Bid, Profile } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -21,8 +21,10 @@ export default function RequestDetail() {
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [bids, setBids] = useState<BidWithProfile[]>([]);
   const [price, setPrice] = useState("");
+  const [estimatedWait, setEstimatedWait] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const prevBidCount = useRef(0);
 
   const isCustomer = request?.customer_id === user?.id;
   const isProvider = profile?.role === "provider";
@@ -33,12 +35,21 @@ export default function RequestDetail() {
 
     const channel = supabase
       .channel(`request-${id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "bids", filter: `request_id=eq.${id}` }, () => loadBids())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bids", filter: `request_id=eq.${id}` }, (payload) => {
+        loadBids();
+        // Show toast for customer when new bid arrives
+        if (payload.eventType === "INSERT" && isCustomer) {
+          const newBid = payload.new as any;
+          toast("💈 New bid!", {
+            description: `CHF ${Number(newBid.price).toFixed(0)}${newBid.estimated_wait_minutes ? ` · ${newBid.estimated_wait_minutes} min wait` : ""}`,
+          });
+        }
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "service_requests", filter: `id=eq.${id}` }, () => loadRequest())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [id]);
+  }, [id, isCustomer]);
 
   const loadData = () => {
     loadRequest();
@@ -58,15 +69,14 @@ export default function RequestDetail() {
       .select("*")
       .eq("request_id", id)
       .order("price", { ascending: true });
-    
-    // Fetch provider profiles separately
+
     if (data && data.length > 0) {
       const providerIds = [...new Set(data.map(b => b.provider_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, display_name, avatar_url")
         .in("user_id", providerIds);
-      
+
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
       const bidsWithProfiles: BidWithProfile[] = data.map(bid => ({
         ...bid,
@@ -91,6 +101,7 @@ export default function RequestDetail() {
       provider_id: user.id,
       price: parseFloat(price),
       message: message || null,
+      estimated_wait_minutes: estimatedWait ? parseInt(estimatedWait) : null,
     });
 
     if (error) {
@@ -99,7 +110,7 @@ export default function RequestDetail() {
       toast.success("Bid submitted!");
       setPrice("");
       setMessage("");
-      // Update request status to bidding
+      setEstimatedWait("");
       await supabase.from("service_requests").update({ status: "bidding" as any }).eq("id", id);
     }
     setSubmitting(false);
@@ -108,12 +119,12 @@ export default function RequestDetail() {
   const handleAcceptBid = async (bid: BidWithProfile) => {
     if (!user || !request) return;
 
-    // Create booking
     const { error: bookingError } = await supabase.from("bookings").insert({
       request_id: request.id,
       bid_id: bid.id,
       customer_id: user.id,
       provider_id: bid.provider_id,
+      final_price_chf: Number(bid.price),
     });
 
     if (bookingError) {
@@ -121,7 +132,6 @@ export default function RequestDetail() {
       return;
     }
 
-    // Update request and bid statuses
     await Promise.all([
       supabase.from("service_requests").update({ status: "confirmed" as any }).eq("id", request.id),
       supabase.from("bids").update({ status: "accepted" as any }).eq("id", bid.id),
@@ -162,6 +172,9 @@ export default function RequestDetail() {
               request.status === "confirmed" ? "border-primary/20 bg-primary/10 text-primary" :
               "border-border bg-muted text-muted-foreground"
             }`}>
+              {(request.status === "open" || request.status === "bidding") && (
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" />
+              )}
               {request.status}
             </span>
           </div>
@@ -175,6 +188,19 @@ export default function RequestDetail() {
               {format(new Date(request.requested_time), "EEEE, MMM d 'at' HH:mm")}
             </span>
           </div>
+
+          {/* Live bid summary for customer */}
+          {isCustomer && bids.length > 0 && request.status !== "confirmed" && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">{bids.length} bid{bids.length > 1 ? "s" : ""} received</span>
+                <span className="text-primary font-semibold">
+                  Best: CHF {Number(bids[0].price).toFixed(0)}
+                  {bids[0].estimated_wait_minutes && ` · ${bids[0].estimated_wait_minutes} min`}
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -188,14 +214,22 @@ export default function RequestDetail() {
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center py-8 text-center">
               <Banknote className="h-8 w-8 text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">No bids yet. {isCustomer ? "Waiting for barbers..." : "Be the first to bid!"}</p>
+              <p className="text-sm text-muted-foreground">
+                {isCustomer ? "Waiting for barbers to bid..." : "Be the first to bid!"}
+              </p>
+              {isCustomer && (
+                <p className="text-xs text-muted-foreground/60 mt-1">Bids will appear here instantly</p>
+              )}
             </CardContent>
           </Card>
         )}
 
         <div className="space-y-2">
           {bids.map((bid, i) => (
-            <Card key={bid.id} className={`transition-all ${i === 0 && bids.length > 1 ? "border-primary/30 shadow-sm" : ""} ${bid.status === "accepted" ? "border-success/30 bg-success/5" : ""}`}>
+            <Card
+              key={bid.id}
+              className={`transition-all animate-fade-in-up ${i === 0 && bids.length > 1 ? "border-primary/30 shadow-sm" : ""} ${bid.status === "accepted" ? "border-success/30 bg-success/5" : ""}`}
+            >
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
@@ -203,7 +237,15 @@ export default function RequestDetail() {
                   </div>
                   <div>
                     <p className="font-medium">{bid.profiles?.display_name || "Barber"}</p>
-                    {bid.message && <p className="text-sm text-muted-foreground line-clamp-1">{bid.message}</p>}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      {bid.message && <span className="line-clamp-1">{bid.message}</span>}
+                      {bid.estimated_wait_minutes && (
+                        <span className="flex items-center gap-0.5 text-xs shrink-0">
+                          <Timer className="h-3 w-3" />
+                          {bid.estimated_wait_minutes} min
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -240,17 +282,30 @@ export default function RequestDetail() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleBid} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Price (CHF)</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="e.g. 45"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Price (CHF)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="e.g. 45"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Est. Wait (min)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="5"
+                    value={estimatedWait}
+                    onChange={(e) => setEstimatedWait(e.target.value)}
+                    placeholder="e.g. 15"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Message (optional)</Label>
