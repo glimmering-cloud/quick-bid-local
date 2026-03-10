@@ -74,7 +74,27 @@ export default function CustomerDashboard() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Request posted! Barbers nearby will be notified.");
+      // Trigger matching engine to find nearby providers
+      const { data: allReqs } = await supabase
+        .from("service_requests")
+        .select("id")
+        .eq("customer_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (allReqs?.[0]) {
+        const { data: matchResult } = await supabase.functions.invoke("match-providers", {
+          body: { request_id: allReqs[0].id },
+        });
+        const count = matchResult?.matched_count ?? 0;
+        toast.success(
+          count > 0
+            ? `Request posted! ${count} barber${count > 1 ? "s" : ""} nearby notified.`
+            : "Request posted! No barbers nearby yet — they'll see it when they come online."
+        );
+      } else {
+        toast.success("Request posted!");
+      }
       setShowForm(false);
       setDescription("");
       setRequestedTime("");

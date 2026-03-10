@@ -3,29 +3,59 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, ChevronRight, Zap, User } from "lucide-react";
+import { MapPin, Clock, ChevronRight, Zap, User, Bell, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { ServiceRequest } from "@/lib/types";
 import { format } from "date-fns";
+
+type Notification = {
+  id: string;
+  user_id: string;
+  request_id: string;
+  type: string;
+  message: string;
+  read: boolean;
+  created_at: string;
+};
 
 export default function ProviderDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<(ServiceRequest & { profiles: { display_name: string } | null })[]>([]);
   const [myBidRequestIds, setMyBidRequestIds] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     if (!user) return;
     loadData();
+    loadNotifications();
 
     const channel = supabase
       .channel("provider-requests")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "service_requests" }, () => loadData())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "service_requests" }, () => loadData())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => loadNotifications())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [user]);
+
+  const loadNotifications = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("read", false)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setNotifications((data as Notification[]) || []);
+  };
+
+  const dismissNotification = async (id: string) => {
+    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
   const loadData = async () => {
     if (!user) return;
@@ -42,7 +72,6 @@ export default function ProviderDashboard() {
         .eq("provider_id", user.id),
     ]);
 
-    // Fetch customer profiles separately
     const rawReqs = reqs || [];
     if (rawReqs.length > 0) {
       const customerIds = [...new Set(rawReqs.map(r => r.customer_id))];
@@ -67,6 +96,38 @@ export default function ProviderDashboard() {
         <h1 className="font-heading text-2xl font-bold">Available Requests</h1>
         <p className="text-sm text-muted-foreground">Nearby haircut requests waiting for your bid</p>
       </div>
+
+      {/* Real-time notifications */}
+      {notifications.length > 0 && (
+        <div className="space-y-2">
+          {notifications.map((notif) => (
+            <Card key={notif.id} className="border-primary/30 bg-primary/5 animate-fade-in-up">
+              <CardContent className="flex items-center justify-between p-3">
+                <div className="flex items-center gap-2.5">
+                  <Bell className="h-4 w-4 text-primary shrink-0" />
+                  <p className="text-sm font-medium">{notif.message}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      dismissNotification(notif.id);
+                      navigate(`/request/${notif.request_id}`);
+                    }}
+                  >
+                    View & Bid
+                  </Button>
+                  <button onClick={() => dismissNotification(notif.id)} className="text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {requests.length === 0 && (
         <Card className="border-dashed">
