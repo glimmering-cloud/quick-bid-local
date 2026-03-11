@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Scissors, LogOut, User, LayoutDashboard } from "lucide-react";
+import { Zap, LogOut, User, LayoutDashboard } from "lucide-react";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, profile, signOut } = useAuth();
@@ -20,9 +20,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <div className="container flex h-14 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Scissors className="h-4 w-4 text-primary-foreground" />
+              <Zap className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span>QuickCut</span>
+            <span>QuickServe</span>
           </Link>
 
           <nav className="flex items-center gap-2">

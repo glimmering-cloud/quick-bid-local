@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, ChevronRight, Zap, User, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getCategoryById } from "@/lib/categories";
 import type { ServiceRequest } from "@/lib/types";
 import { format } from "date-fns";
 
@@ -94,10 +95,9 @@ export default function ProviderDashboard() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold">Available Requests</h1>
-        <p className="text-sm text-muted-foreground">Nearby haircut requests waiting for your bid</p>
+        <p className="text-sm text-muted-foreground">Nearby service requests waiting for your bid</p>
       </div>
 
-      {/* Real-time notifications */}
       {notifications.length > 0 && (
         <div className="space-y-2">
           {notifications.map((notif) => (
@@ -140,48 +140,52 @@ export default function ProviderDashboard() {
       )}
 
       <div className="space-y-3">
-        {requests.map((req) => (
-          <Card
-            key={req.id}
-            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/20"
-            onClick={() => navigate(`/request/${req.id}`)}
-          >
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-heading font-semibold">{req.title}</h3>
-                  {myBidRequestIds.has(req.id) && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                      Bid sent
+        {requests.map((req) => {
+          const cat = getCategoryById(req.category);
+          return (
+            <Card
+              key={req.id}
+              className="cursor-pointer transition-all hover:shadow-md hover:border-primary/20"
+              onClick={() => navigate(`/request/${req.id}`)}
+            >
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{cat.emoji}</span>
+                    <h3 className="font-heading font-semibold">{req.title}</h3>
+                    {myBidRequestIds.has(req.id) && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        Bid sent
+                      </span>
+                    )}
+                    <span className="inline-flex items-center rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                      <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" />
+                      {req.status}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <User className="h-3.5 w-3.5" />
+                      {req.profiles?.display_name || "Customer"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {req.location_name}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {format(new Date(req.requested_time), "MMM d, HH:mm")}
+                    </span>
+                  </div>
+                  {req.description && (
+                    <p className="text-sm text-muted-foreground/70 line-clamp-1">{req.description}</p>
                   )}
-                  <span className="inline-flex items-center rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                    <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" />
-                    {req.status}
-                  </span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <User className="h-3.5 w-3.5" />
-                    {req.profiles?.display_name || "Customer"}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {req.location_name}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {format(new Date(req.requested_time), "MMM d, HH:mm")}
-                  </span>
-                </div>
-                {req.description && (
-                  <p className="text-sm text-muted-foreground/70 line-clamp-1">{req.description}</p>
-                )}
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground/40 shrink-0" />
-            </CardContent>
-          </Card>
-        ))}
+                <ChevronRight className="h-5 w-5 text-muted-foreground/40 shrink-0" />
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

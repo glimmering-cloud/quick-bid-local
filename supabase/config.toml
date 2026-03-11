@@ -1,1 +1,13 @@
 project_id = "imhpaotnlqnpzldeudaq"
+
+[functions.match-providers]
+verify_jwt = false
+
+[functions.parse-request]
+verify_jwt = false
+
+[functions.simulate-bids]
+verify_jwt = false
+
+[functions.seed-providers]
+verify_jwt = false
