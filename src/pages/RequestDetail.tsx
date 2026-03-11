@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,12 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPin, Clock, User, ArrowLeft, Send, Check, Banknote, Timer } from "lucide-react";
+import { MapPin, Clock, ArrowLeft, Send, Check, Banknote, Timer, Star, TrendingUp } from "lucide-react";
+import { ServiceMap } from "@/components/ServiceMap";
+import { BidRankingCard } from "@/components/BidRankingCard";
+import { PriceSuggestion } from "@/components/PriceSuggestion";
+import { rankBids } from "@/lib/ranking";
+import { getCategoryById } from "@/lib/categories";
 import type { ServiceRequest, Bid, Profile } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-type BidWithProfile = Bid & { profiles: Pick<Profile, "display_name" | "avatar_url"> | null };
+type BidWithProfile = Bid & { profiles: Pick<Profile, "display_name" | "avatar_url"> | null; provider?: any };
 
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,7 +29,6 @@ export default function RequestDetail() {
   const [estimatedWait, setEstimatedWait] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const prevBidCount = useRef(0);
 
   const isCustomer = request?.customer_id === user?.id;
   const isProvider = profile?.role === "provider";
@@ -37,10 +41,9 @@ export default function RequestDetail() {
       .channel(`request-${id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "bids", filter: `request_id=eq.${id}` }, (payload) => {
         loadBids();
-        // Show toast for customer when new bid arrives
         if (payload.eventType === "INSERT" && isCustomer) {
           const newBid = payload.new as any;
-          toast("💈 New bid!", {
+          toast("🔔 New bid!", {
             description: `CHF ${Number(newBid.price).toFixed(0)}${newBid.estimated_wait_minutes ? ` · ${newBid.estimated_wait_minutes} min wait` : ""}`,
           });
         }
@@ -68,22 +71,25 @@ export default function RequestDetail() {
       .from("bids")
       .select("*")
       .eq("request_id", id)
-      .order("price", { ascending: true });
+      .order("created_at", { ascending: true });
 
     if (data && data.length > 0) {
       const providerIds = [...new Set(data.map(b => b.provider_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, avatar_url")
-        .in("user_id", providerIds);
+      const [{ data: profiles }, { data: providerRecords }] = await Promise.all([
+        supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", providerIds),
+        supabase.from("providers").select("user_id, business_name, rating, latitude, longitude").in("user_id", providerIds),
+      ]);
 
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      const providerMap = new Map((providerRecords || []).map(p => [p.user_id, p]));
+      
       const bidsWithProfiles: BidWithProfile[] = data.map(bid => ({
         ...bid,
         profiles: profileMap.get(bid.provider_id) ? {
-          display_name: profileMap.get(bid.provider_id)!.display_name,
+          display_name: providerMap.get(bid.provider_id)?.business_name || profileMap.get(bid.provider_id)!.display_name,
           avatar_url: profileMap.get(bid.provider_id)!.avatar_url,
         } : null,
+        provider: providerMap.get(bid.provider_id) || null,
       }));
       setBids(bidsWithProfiles);
     } else {
@@ -151,9 +157,25 @@ export default function RequestDetail() {
   }
 
   const alreadyBid = bids.some((b) => b.provider_id === user?.id);
+  const cat = getCategoryById(request.category);
+  const rankedBids = rankBids(bids, request.location_lat, request.location_lng);
+
+  // Map providers from bids
+  const mapProviders = bids
+    .filter(b => b.provider?.latitude)
+    .map(b => ({
+      id: b.provider_id,
+      name: b.profiles?.display_name || "Provider",
+      lat: b.provider.latitude,
+      lng: b.provider.longitude,
+      category: request.category,
+      rating: Number(b.provider.rating || 4),
+      price: Number(b.price),
+      hasBid: true,
+    }));
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" />
         Back
@@ -163,7 +185,10 @@ export default function RequestDetail() {
         <CardContent className="p-6 space-y-4">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="font-heading text-2xl font-bold">{request.title}</h1>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{cat.emoji}</span>
+                <h1 className="font-heading text-2xl font-bold">{request.title}</h1>
+              </div>
               {request.description && <p className="text-muted-foreground mt-1">{request.description}</p>}
             </div>
             <span className={`shrink-0 rounded-full border px-3 py-1 text-sm font-medium ${
@@ -189,14 +214,12 @@ export default function RequestDetail() {
             </span>
           </div>
 
-          {/* Live bid summary for customer */}
           {isCustomer && bids.length > 0 && request.status !== "confirmed" && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">{bids.length} bid{bids.length > 1 ? "s" : ""} received</span>
                 <span className="text-primary font-semibold">
-                  Best: CHF {Number(bids[0].price).toFixed(0)}
-                  {bids[0].estimated_wait_minutes && ` · ${bids[0].estimated_wait_minutes} min`}
+                  Best: CHF {Math.min(...bids.map(b => Number(b.price))).toFixed(0)}
                 </span>
               </div>
             </div>
@@ -204,9 +227,19 @@ export default function RequestDetail() {
         </CardContent>
       </Card>
 
-      {/* Bids section */}
+      {/* Map showing bidding providers */}
+      {mapProviders.length > 0 && (
+        <ServiceMap
+          center={{ lat: request.location_lat, lng: request.location_lng }}
+          providers={mapProviders}
+          className="shadow-sm"
+        />
+      )}
+
+      {/* Ranked bids */}
       <div>
-        <h2 className="font-heading text-lg font-semibold mb-3">
+        <h2 className="font-heading text-lg font-semibold mb-3 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
           Bids {bids.length > 0 && <span className="text-muted-foreground font-normal">({bids.length})</span>}
         </h2>
 
@@ -215,113 +248,86 @@ export default function RequestDetail() {
             <CardContent className="flex flex-col items-center py-8 text-center">
               <Banknote className="h-8 w-8 text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground">
-                {isCustomer ? "Waiting for barbers to bid..." : "Be the first to bid!"}
+                {isCustomer ? "Waiting for providers to bid..." : "Be the first to bid!"}
               </p>
               {isCustomer && (
-                <p className="text-xs text-muted-foreground/60 mt-1">Bids will appear here instantly</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Bids will appear here instantly with AI ranking</p>
               )}
             </CardContent>
           </Card>
         )}
 
         <div className="space-y-2">
-          {bids.map((bid, i) => (
-            <Card
-              key={bid.id}
-              className={`transition-all animate-fade-in-up ${i === 0 && bids.length > 1 ? "border-primary/30 shadow-sm" : ""} ${bid.status === "accepted" ? "border-success/30 bg-success/5" : ""}`}
-            >
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{bid.profiles?.display_name || "Barber"}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      {bid.message && <span className="line-clamp-1">{bid.message}</span>}
-                      {bid.estimated_wait_minutes && (
-                        <span className="flex items-center gap-0.5 text-xs shrink-0">
-                          <Timer className="h-3 w-3" />
-                          {bid.estimated_wait_minutes} min
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="font-heading text-xl font-bold">CHF {Number(bid.price).toFixed(0)}</p>
-                    {i === 0 && bids.length > 1 && <p className="text-xs text-primary font-medium">Best price</p>}
-                  </div>
-                  {isCustomer && request.status !== "confirmed" && bid.status === "pending" && (
-                    <Button size="sm" onClick={() => handleAcceptBid(bid)}>
-                      <Check className="mr-1 h-4 w-4" />
-                      Accept
-                    </Button>
-                  )}
-                  {bid.status === "accepted" && (
-                    <span className="rounded-full bg-success/10 border border-success/20 px-3 py-1 text-sm font-medium text-success">
-                      Accepted
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+          {rankedBids.map((ranked, i) => (
+            <BidRankingCard
+              key={ranked.bid.id}
+              rankedBid={ranked}
+              index={i}
+              isCustomer={isCustomer}
+              requestConfirmed={request.status === "confirmed"}
+              onAccept={() => handleAcceptBid(ranked.bid)}
+            />
           ))}
         </div>
       </div>
 
-      {/* Bid form for providers */}
+      {/* Price suggestion + Bid form for providers */}
       {isProvider && !alreadyBid && request.status !== "confirmed" && (
-        <Card className="border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Send className="h-5 w-5 text-primary" />
-              Submit Your Bid
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleBid} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Price (CHF)</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="e.g. 45"
-                    required
-                  />
+        <>
+          <PriceSuggestion
+            category={request.category}
+            onAcceptPrice={(p) => setPrice(p.toString())}
+          />
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Send className="h-5 w-5 text-primary" />
+                Submit Your Bid
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleBid} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Price (CHF)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="e.g. 45"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Est. Wait (min)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="5"
+                      value={estimatedWait}
+                      onChange={(e) => setEstimatedWait(e.target.value)}
+                      placeholder="e.g. 15"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Est. Wait (min)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="5"
-                    value={estimatedWait}
-                    onChange={(e) => setEstimatedWait(e.target.value)}
-                    placeholder="e.g. 15"
+                  <Label>Message (optional)</Label>
+                  <Textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="e.g. 15 years experience, can come to you..."
+                    rows={2}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Message (optional)</Label>
-                <Textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="e.g. 15 years experience, can come to you..."
-                  rows={2}
-                />
-              </div>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? "Submitting..." : "Submit Bid"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Submitting..." : "Submit Bid"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {isProvider && alreadyBid && (

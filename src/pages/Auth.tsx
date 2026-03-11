@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Scissors, User, Briefcase } from "lucide-react";
+import { Zap, User, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Auth() {
@@ -42,13 +42,13 @@ export default function Auth() {
       <Card className="w-full max-w-md animate-fade-in-up">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-            <Scissors className="h-7 w-7 text-primary-foreground" />
+            <Zap className="h-7 w-7 text-primary-foreground" />
           </div>
           <CardTitle className="font-heading text-2xl">
             {isSignUp ? "Create Account" : "Welcome Back"}
           </CardTitle>
           <CardDescription>
-            {isSignUp ? "Join QuickCut in Zurich" : "Sign in to your QuickCut account"}
+            {isSignUp ? "Join QuickServe in Zurich" : "Sign in to your QuickServe account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,7 +93,7 @@ export default function Auth() {
                     >
                       <Briefcase className={`h-6 w-6 ${role === "provider" ? "text-primary" : "text-muted-foreground"}`} />
                       <span className={`text-sm font-medium ${role === "provider" ? "text-primary" : "text-muted-foreground"}`}>
-                        Barber
+                        Provider
                       </span>
                     </button>
                   </div>

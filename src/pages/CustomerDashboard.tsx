@@ -7,7 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, MapPin, Clock, ChevronRight, Scissors, Banknote } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, MapPin, Clock, ChevronRight, Banknote, Sparkles, Zap } from "lucide-react";
+import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
+import { ServiceMap } from "@/components/ServiceMap";
+import { SERVICE_CATEGORIES, getCategoryById } from "@/lib/categories";
 import type { ServiceRequest } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -27,28 +31,31 @@ export default function CustomerDashboard() {
   const [bidCounts, setBidCounts] = useState<Record<string, number>>({});
   const [lowestBids, setLowestBids] = useState<Record<string, number>>({});
   const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState("Haircut");
+  const [useNLP, setUseNLP] = useState(true);
+  const [demoMode, setDemoMode] = useState(true);
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("haircut");
   const [locationIdx, setLocationIdx] = useState(0);
   const [requestedTime, setRequestedTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const prevBidCountRef = useRef<Record<string, number>>({});
+  const [providers, setProviders] = useState<any[]>([]);
+  const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
     loadRequests();
+    loadProviders();
 
     const channel = supabase
       .channel("customer-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "service_requests", filter: `customer_id=eq.${user.id}` }, () => loadRequests())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "bids" }, (payload) => {
-        // Check if this bid is for one of our requests
         const newBid = payload.new as any;
         loadBidCounts().then(() => {
-          // Show toast if it's for our request
           const isOurRequest = requests.some(r => r.id === newBid.request_id);
           if (isOurRequest) {
-            toast("💈 New bid received!", {
+            toast("🔔 New bid received!", {
               description: `CHF ${Number(newBid.price).toFixed(0)} for your request`,
               action: {
                 label: "View",
@@ -73,7 +80,22 @@ export default function CustomerDashboard() {
     setRequests(data || []);
     if (data && data.length > 0) {
       loadBidCounts(data);
+      // Generate heatmap from requests
+      setHeatmapPoints(data.map(r => ({ lat: r.location_lat, lng: r.location_lng, intensity: 3 + Math.random() * 4 })));
     }
+  };
+
+  const loadProviders = async () => {
+    const { data } = await supabase.from("providers").select("*");
+    setProviders((data || []).map(p => ({
+      id: p.id,
+      name: p.business_name,
+      lat: p.latitude || 47.377,
+      lng: p.longitude || 8.542,
+      category: p.service_category,
+      rating: Number(p.rating || 4),
+      distance_km: 0.5 + Math.random() * 1.5,
+    })));
   };
 
   const loadBidCounts = async (reqs?: ServiceRequest[]) => {
@@ -97,6 +119,22 @@ export default function CustomerDashboard() {
     setLowestBids(lowest);
   };
 
+  const handleNLPParsed = (parsed: any) => {
+    setTitle(parsed.title || "");
+    setDescription(parsed.description || "");
+    setCategory(parsed.category || "haircut");
+    if (parsed.requested_time) {
+      const dt = new Date(parsed.requested_time);
+      setRequestedTime(dt.toISOString().slice(0, 16));
+    }
+    // Match location
+    const locIdx = ZURICH_LOCATIONS.findIndex(l =>
+      parsed.location_name?.toLowerCase().includes(l.name.toLowerCase().replace("zurich ", ""))
+    );
+    setLocationIdx(locIdx >= 0 ? locIdx : 0);
+    setUseNLP(false); // Switch to manual form to review
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -105,9 +143,9 @@ export default function CustomerDashboard() {
     const loc = ZURICH_LOCATIONS[locationIdx];
     const { error } = await supabase.from("service_requests").insert({
       customer_id: user.id,
-      title,
+      title: title || getCategoryById(category).label,
       description,
-      category: "haircut",
+      category,
       location_lat: loc.lat,
       location_lng: loc.lng,
       location_name: loc.name,
@@ -125,19 +163,30 @@ export default function CustomerDashboard() {
         .limit(1);
 
       if (allReqs?.[0]) {
+        // Match real providers
         const { data: matchResult } = await supabase.functions.invoke("match-providers", {
           body: { request_id: allReqs[0].id },
         });
         const count = matchResult?.matched_count ?? 0;
-        toast.success(
-          count > 0
-            ? `Request posted! ${count} barber${count > 1 ? "s" : ""} nearby notified.`
-            : "Request posted! Barbers will see it when they come online."
-        );
+
+        // Demo mode: also simulate bids
+        if (demoMode) {
+          supabase.functions.invoke("simulate-bids", {
+            body: { request_id: allReqs[0].id },
+          }); // Fire and forget
+          toast.success(`Request posted! ${count > 0 ? `${count} providers notified.` : ""} Demo bids incoming...`);
+        } else {
+          toast.success(
+            count > 0
+              ? `Request posted! ${count} provider${count > 1 ? "s" : ""} nearby notified.`
+              : "Request posted! Providers will see it when they come online."
+          );
+        }
       } else {
         toast.success("Request posted!");
       }
       setShowForm(false);
+      setTitle("");
       setDescription("");
       setRequestedTime("");
     }
@@ -149,81 +198,129 @@ export default function CustomerDashboard() {
       case "open": return "bg-success/10 text-success border-success/20";
       case "bidding": return "bg-warning/10 text-warning border-warning/20";
       case "confirmed": return "bg-primary/10 text-primary border-primary/20";
-      case "completed": return "bg-muted text-muted-foreground border-border";
       default: return "bg-muted text-muted-foreground border-border";
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold">My Requests</h1>
-          <p className="text-sm text-muted-foreground">Post a haircut request and get bids from barbers nearby</p>
+          <p className="text-sm text-muted-foreground">Post a service request and get bids from providers nearby</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} size="sm">
-          <Plus className="mr-1.5 h-4 w-4" />
-          New Request
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-warning" />
+            <Label htmlFor="demo-mode" className="text-xs text-muted-foreground">Demo</Label>
+            <Switch id="demo-mode" checked={demoMode} onCheckedChange={setDemoMode} />
+          </div>
+          <Button onClick={() => setShowForm(!showForm)} size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            New Request
+          </Button>
+        </div>
       </div>
+
+      {/* Map */}
+      <ServiceMap
+        center={ZURICH_LOCATIONS[locationIdx]}
+        providers={providers}
+        heatmapPoints={heatmapPoints}
+        className="shadow-sm"
+      />
 
       {showForm && (
         <Card className="animate-fade-in-up border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Scissors className="h-5 w-5 text-primary" />
-              New Haircut Request
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Sparkles className="h-5 w-5 text-primary" />
+                New Service Request
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="nlp-toggle" className="text-xs text-muted-foreground">AI Input</Label>
+                <Switch id="nlp-toggle" checked={useNLP} onCheckedChange={setUseNLP} />
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Service</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Haircut, Beard Trim" required />
-              </div>
-              <div className="space-y-2">
-                <Label>Details (optional)</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Any preferences or notes..." rows={2} />
-              </div>
-              <div className="space-y-2">
-                <Label>Location</Label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {ZURICH_LOCATIONS.map((loc, i) => (
-                    <button
-                      key={loc.name}
-                      type="button"
-                      onClick={() => setLocationIdx(i)}
-                      className={`rounded-lg border px-3 py-2 text-sm transition-all ${
-                        locationIdx === i
-                          ? "border-primary bg-primary/5 text-primary font-medium"
-                          : "border-border hover:border-muted-foreground/30"
-                      }`}
-                    >
-                      <MapPin className="inline h-3.5 w-3.5 mr-1" />
-                      {loc.name.replace("Zurich ", "")}
-                    </button>
-                  ))}
+          <CardContent className="space-y-4">
+            {useNLP ? (
+              <NaturalLanguageInput onParsed={handleNLPParsed} />
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Category selector */}
+                <div className="space-y-2">
+                  <Label>Service Category</Label>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {SERVICE_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setCategory(cat.id);
+                          if (!title) setTitle(cat.label);
+                        }}
+                        className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-xs transition-all ${
+                          category === cat.id
+                            ? "border-primary bg-primary/5 text-primary font-medium"
+                            : "border-border hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <cat.icon className="h-4 w-4" />
+                        {cat.label.split("/")[0].trim()}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>When</Label>
-                <Input
-                  type="datetime-local"
-                  value={requestedTime}
-                  onChange={(e) => setRequestedTime(e.target.value)}
-                  required
-                  min={new Date().toISOString().slice(0, 16)}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Posting..." : "Post Request"}
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Haircut, Leaking pipe fix" required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Details (optional)</Label>
+                  <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Any preferences or notes..." rows={2} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Location</Label>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {ZURICH_LOCATIONS.map((loc, i) => (
+                      <button
+                        key={loc.name}
+                        type="button"
+                        onClick={() => setLocationIdx(i)}
+                        className={`rounded-lg border px-3 py-2 text-sm transition-all ${
+                          locationIdx === i
+                            ? "border-primary bg-primary/5 text-primary font-medium"
+                            : "border-border hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <MapPin className="inline h-3.5 w-3.5 mr-1" />
+                        {loc.name.replace("Zurich ", "")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>When</Label>
+                  <Input
+                    type="datetime-local"
+                    value={requestedTime}
+                    onChange={(e) => setRequestedTime(e.target.value)}
+                    required
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? "Posting..." : "Post Request"}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
           </CardContent>
         </Card>
       )}
@@ -231,9 +328,9 @@ export default function CustomerDashboard() {
       {requests.length === 0 && !showForm && (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Scissors className="h-10 w-10 text-muted-foreground/40 mb-3" />
+            <Sparkles className="h-10 w-10 text-muted-foreground/40 mb-3" />
             <p className="text-muted-foreground font-medium">No requests yet</p>
-            <p className="text-sm text-muted-foreground/70">Post your first haircut request to get started</p>
+            <p className="text-sm text-muted-foreground/70">Post your first service request to get started</p>
           </CardContent>
         </Card>
       )}
@@ -242,6 +339,7 @@ export default function CustomerDashboard() {
         {requests.map((req) => {
           const count = bidCounts[req.id] || 0;
           const lowest = lowestBids[req.id];
+          const cat = getCategoryById(req.category);
           return (
             <Card
               key={req.id}
@@ -251,6 +349,7 @@ export default function CustomerDashboard() {
               <CardContent className="flex items-center justify-between p-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
+                    <span className="text-lg">{cat.emoji}</span>
                     <h3 className="font-heading font-semibold">{req.title}</h3>
                     <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${statusColor(req.status)}`}>
                       {(req.status === "open" || req.status === "bidding") && <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" />}
