@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, User, CheckCircle2, ArrowLeft } from "lucide-react";
+import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
 
 export default function BookingConfirmation() {
@@ -63,6 +64,7 @@ export default function BookingConfirmation() {
 
   const request = booking.service_requests;
   const isCustomer = booking.customer_id === user?.id;
+  const cat = getCategoryById(request?.category);
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
@@ -84,13 +86,16 @@ export default function BookingConfirmation() {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Service</span>
-              <span className="font-medium">{request.title}</span>
+              <span className="font-medium flex items-center gap-1.5">
+                <span>{cat.emoji}</span>
+                {request.title}
+              </span>
             </div>
             <div className="h-px bg-border" />
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Price</span>
               <span className="font-heading text-xl font-bold text-primary">
-                CHF {Number(booking.bids?.price || 0).toFixed(0)}
+                CHF {Number(booking.bids?.price || booking.final_price_chf || 0).toFixed(0)}
               </span>
             </div>
             <div className="h-px bg-border" />
@@ -111,7 +116,7 @@ export default function BookingConfirmation() {
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                 <User className="h-4 w-4" />
-                {isCustomer ? "Barber" : "Customer"}
+                {isCustomer ? cat.label : "Customer"}
               </span>
               <span className="font-medium">
                 {isCustomer ? booking.provider?.display_name : booking.customer?.display_name}

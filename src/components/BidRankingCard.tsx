@@ -1,7 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, User, Timer, MapPin, Star, TrendingUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Check, Timer, Star, TrendingUp, Navigation } from "lucide-react";
 import type { RankedBid } from "@/lib/ranking";
 import { estimateETA } from "@/lib/ranking";
 
@@ -10,13 +9,28 @@ interface BidRankingCardProps {
   index: number;
   isCustomer: boolean;
   requestConfirmed: boolean;
+  requestLat?: number;
+  requestLng?: number;
   onAccept: () => void;
 }
 
-export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed, onAccept }: BidRankingCardProps) {
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed, requestLat, requestLng, onAccept }: BidRankingCardProps) {
   const { bid, score, tags } = rankedBid;
-  const distKm = bid.provider?.latitude ? undefined : undefined; // will use tag
-  const eta = estimateETA(1); // default
+
+  const distKm = (bid.provider?.latitude && bid.provider?.longitude && requestLat && requestLng)
+    ? haversine(requestLat, requestLng, bid.provider.latitude, bid.provider.longitude)
+    : null;
+  const eta = distKm !== null ? estimateETA(distKm) : null;
 
   const tagColorMap: Record<string, string> = {
     success: "bg-success/10 text-success border-success/20",
@@ -46,10 +60,22 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
                     {Number(bid.provider.rating).toFixed(1)}
                   </span>
                 )}
+                {distKm !== null && (
+                  <span className="flex items-center gap-0.5">
+                    <Navigation className="h-3 w-3" />
+                    {distKm.toFixed(1)} km
+                  </span>
+                )}
+                {eta !== null && (
+                  <span className="flex items-center gap-0.5">
+                    <Timer className="h-3 w-3" />
+                    ~{eta} min ETA
+                  </span>
+                )}
                 {bid.estimated_wait_minutes && (
                   <span className="flex items-center gap-0.5">
                     <Timer className="h-3 w-3" />
-                    {bid.estimated_wait_minutes} min
+                    {bid.estimated_wait_minutes} min wait
                   </span>
                 )}
                 <span className="flex items-center gap-0.5">

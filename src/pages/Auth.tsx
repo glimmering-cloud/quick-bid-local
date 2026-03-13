@@ -28,7 +28,6 @@ export default function Auth() {
       } else {
         await signIn(email, password);
         toast.success("Welcome back!");
-        navigate("/dashboard");
       }
     } catch (err: any) {
       toast.error(err.message);

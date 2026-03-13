@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
       options: {
-        data: { display_name: displayName },
+        data: { display_name: displayName, role },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -71,10 +71,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Wait for profile to be auto-created, then update role
     const { data: { user: newUser } } = await supabase.auth.getUser();
     if (newUser) {
-      await supabase
-        .from("profiles")
-        .update({ role, display_name: displayName })
-        .eq("user_id", newUser.id);
+      // Retry profile update with a small delay to allow trigger to create it
+      const updateProfile = async (retries = 3) => {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ role, display_name: displayName })
+          .eq("user_id", newUser.id);
+        if (updateError && retries > 0) {
+          await new Promise(r => setTimeout(r, 500));
+          return updateProfile(retries - 1);
+        }
+      };
+      await updateProfile();
     }
   };
 

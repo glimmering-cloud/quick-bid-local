@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +28,7 @@ export default function CustomerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const requestsRef = useRef<ServiceRequest[]>([]);
   const [bidCounts, setBidCounts] = useState<Record<string, number>>({});
   const [lowestBids, setLowestBids] = useState<Record<string, number>>({});
   const [showForm, setShowForm] = useState(false);
@@ -42,64 +43,13 @@ export default function CustomerDashboard() {
   const [providers, setProviders] = useState<any[]>([]);
   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
 
+  // Keep ref in sync
   useEffect(() => {
-    if (!user) return;
-    loadRequests();
-    loadProviders();
+    requestsRef.current = requests;
+  }, [requests]);
 
-    const channel = supabase
-      .channel("customer-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "service_requests", filter: `customer_id=eq.${user.id}` }, () => loadRequests())
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bids" }, (payload) => {
-        const newBid = payload.new as any;
-        loadBidCounts().then(() => {
-          const isOurRequest = requests.some(r => r.id === newBid.request_id);
-          if (isOurRequest) {
-            toast("🔔 New bid received!", {
-              description: `CHF ${Number(newBid.price).toFixed(0)} for your request`,
-              action: {
-                label: "View",
-                onClick: () => navigate(`/request/${newBid.request_id}`),
-              },
-            });
-          }
-        });
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [user, requests.length]);
-
-  const loadRequests = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("service_requests")
-      .select("*")
-      .eq("customer_id", user.id)
-      .order("created_at", { ascending: false });
-    setRequests(data || []);
-    if (data && data.length > 0) {
-      loadBidCounts(data);
-      // Generate heatmap from requests
-      setHeatmapPoints(data.map(r => ({ lat: r.location_lat, lng: r.location_lng, intensity: 3 + Math.random() * 4 })));
-    }
-  };
-
-  const loadProviders = async () => {
-    const { data } = await supabase.from("providers").select("*");
-    setProviders((data || []).map(p => ({
-      id: p.id,
-      name: p.business_name,
-      lat: p.latitude || 47.377,
-      lng: p.longitude || 8.542,
-      category: p.service_category,
-      rating: Number(p.rating || 4),
-      distance_km: 0.5 + Math.random() * 1.5,
-    })));
-  };
-
-  const loadBidCounts = async (reqs?: ServiceRequest[]) => {
-    const requestList = reqs || requests;
+  const loadBidCounts = useCallback(async (reqs?: ServiceRequest[]) => {
+    const requestList = reqs || requestsRef.current;
     if (requestList.length === 0) return;
     const requestIds = requestList.map(r => r.id);
     const { data: bids } = await supabase
@@ -117,7 +67,63 @@ export default function CustomerDashboard() {
     });
     setBidCounts(counts);
     setLowestBids(lowest);
-  };
+  }, []);
+
+  const loadRequests = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("service_requests")
+      .select("*")
+      .eq("customer_id", user.id)
+      .order("created_at", { ascending: false });
+    const reqs = data || [];
+    setRequests(reqs);
+    if (reqs.length > 0) {
+      loadBidCounts(reqs);
+      setHeatmapPoints(reqs.map(r => ({ lat: r.location_lat, lng: r.location_lng, intensity: 3 + Math.random() * 4 })));
+    }
+  }, [user, loadBidCounts]);
+
+  const loadProviders = useCallback(async () => {
+    const { data } = await supabase.from("providers").select("*");
+    setProviders((data || []).map(p => ({
+      id: p.id,
+      name: p.business_name,
+      lat: p.latitude || 47.377,
+      lng: p.longitude || 8.542,
+      category: p.service_category,
+      rating: Number(p.rating || 4),
+      distance_km: 0.5 + Math.random() * 1.5,
+    })));
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    loadRequests();
+    loadProviders();
+
+    const channel = supabase
+      .channel("customer-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "service_requests", filter: `customer_id=eq.${user.id}` }, () => loadRequests())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "bids" }, (payload) => {
+        const newBid = payload.new as any;
+        loadBidCounts().then(() => {
+          const isOurRequest = requestsRef.current.some(r => r.id === newBid.request_id);
+          if (isOurRequest) {
+            toast("🔔 New bid received!", {
+              description: `CHF ${Number(newBid.price).toFixed(0)} for your request`,
+              action: {
+                label: "View",
+                onClick: () => navigate(`/request/${newBid.request_id}`),
+              },
+            });
+          }
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user, loadRequests, loadProviders, loadBidCounts, navigate]);
 
   const handleNLPParsed = (parsed: any) => {
     setTitle(parsed.title || "");
@@ -127,17 +133,20 @@ export default function CustomerDashboard() {
       const dt = new Date(parsed.requested_time);
       setRequestedTime(dt.toISOString().slice(0, 16));
     }
-    // Match location
     const locIdx = ZURICH_LOCATIONS.findIndex(l =>
       parsed.location_name?.toLowerCase().includes(l.name.toLowerCase().replace("zurich ", ""))
     );
     setLocationIdx(locIdx >= 0 ? locIdx : 0);
-    setUseNLP(false); // Switch to manual form to review
+    setUseNLP(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!requestedTime) {
+      toast.error("Please select a date and time");
+      return;
+    }
     setSubmitting(true);
 
     const loc = ZURICH_LOCATIONS[locationIdx];
@@ -163,17 +172,15 @@ export default function CustomerDashboard() {
         .limit(1);
 
       if (allReqs?.[0]) {
-        // Match real providers
         const { data: matchResult } = await supabase.functions.invoke("match-providers", {
           body: { request_id: allReqs[0].id },
         });
         const count = matchResult?.matched_count ?? 0;
 
-        // Demo mode: also simulate bids
         if (demoMode) {
           supabase.functions.invoke("simulate-bids", {
             body: { request_id: allReqs[0].id },
-          }); // Fire and forget
+          });
           toast.success(`Request posted! ${count > 0 ? `${count} providers notified.` : ""} Demo bids incoming...`);
         } else {
           toast.success(
@@ -222,7 +229,6 @@ export default function CustomerDashboard() {
         </div>
       </div>
 
-      {/* Map */}
       <ServiceMap
         center={ZURICH_LOCATIONS[locationIdx]}
         providers={providers}
@@ -249,7 +255,6 @@ export default function CustomerDashboard() {
               <NaturalLanguageInput onParsed={handleNLPParsed} />
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Category selector */}
                 <div className="space-y-2">
                   <Label>Service Category</Label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
