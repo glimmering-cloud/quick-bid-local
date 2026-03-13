@@ -265,6 +265,8 @@ export default function RequestDetail() {
               index={i}
               isCustomer={isCustomer}
               requestConfirmed={request.status === "confirmed"}
+              requestLat={request.location_lat}
+              requestLng={request.location_lng}
               onAccept={() => handleAcceptBid(ranked.bid)}
             />
           ))}
