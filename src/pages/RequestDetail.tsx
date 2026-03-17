@@ -16,6 +16,8 @@ import { getCategoryById } from "@/lib/categories";
 import type { ServiceRequest, Bid, Profile } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { PageLoader } from "@/components/LoadingSkeleton";
 
 type BidWithProfile = Bid & { profiles: Pick<Profile, "display_name" | "avatar_url"> | null; provider?: any };
 
@@ -54,10 +56,7 @@ export default function RequestDetail() {
     return () => { supabase.removeChannel(channel); };
   }, [id, isCustomer]);
 
-  const loadData = () => {
-    loadRequest();
-    loadBids();
-  };
+  const loadData = () => { loadRequest(); loadBids(); };
 
   const loadRequest = async () => {
     if (!id) return;
@@ -114,9 +113,7 @@ export default function RequestDetail() {
       toast.error(error.message);
     } else {
       toast.success("Bid submitted!");
-      setPrice("");
-      setMessage("");
-      setEstimatedWait("");
+      setPrice(""); setMessage(""); setEstimatedWait("");
       await supabase.from("service_requests").update({ status: "bidding" as any }).eq("id", id);
     }
     setSubmitting(false);
@@ -133,10 +130,7 @@ export default function RequestDetail() {
       final_price_chf: Number(bid.price),
     });
 
-    if (bookingError) {
-      toast.error(bookingError.message);
-      return;
-    }
+    if (bookingError) { toast.error(bookingError.message); return; }
 
     await Promise.all([
       supabase.from("service_requests").update({ status: "confirmed" as any }).eq("id", request.id),
@@ -148,19 +142,12 @@ export default function RequestDetail() {
     navigate(`/booking/${request.id}`);
   };
 
-  if (!request) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
+  if (!request) return <PageLoader />;
 
   const alreadyBid = bids.some((b) => b.provider_id === user?.id);
   const cat = getCategoryById(request.category);
   const rankedBids = rankBids(bids, request.location_lat, request.location_lng);
 
-  // Map providers from bids
   const mapProviders = bids
     .filter(b => b.provider?.latitude)
     .map(b => ({
@@ -174,29 +161,35 @@ export default function RequestDetail() {
       hasBid: true,
     }));
 
+  const statusClasses =
+    request.status === "open" ? "border-success/20 bg-success/10 text-success" :
+    request.status === "bidding" ? "border-warning/20 bg-warning/10 text-warning" :
+    request.status === "confirmed" ? "border-primary/20 bg-primary/10 text-primary" :
+    "border-border bg-muted text-muted-foreground";
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-3xl mx-auto space-y-6"
+    >
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" />
         Back
       </button>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardContent className="p-6 space-y-4">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <span className="text-2xl">{cat.emoji}</span>
                 <h1 className="font-heading text-2xl font-bold">{request.title}</h1>
               </div>
-              {request.description && <p className="text-muted-foreground mt-1">{request.description}</p>}
+              {request.description && <p className="text-muted-foreground mt-1.5">{request.description}</p>}
             </div>
-            <span className={`shrink-0 rounded-full border px-3 py-1 text-sm font-medium ${
-              request.status === "open" ? "border-success/20 bg-success/10 text-success" :
-              request.status === "bidding" ? "border-warning/20 bg-warning/10 text-warning" :
-              request.status === "confirmed" ? "border-primary/20 bg-primary/10 text-primary" :
-              "border-border bg-muted text-muted-foreground"
-            }`}>
+            <span className={`shrink-0 rounded-full border px-3 py-1 text-sm font-medium ${statusClasses}`}>
               {(request.status === "open" || request.status === "bidding") && (
                 <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current animate-pulse-dot" />
               )}
@@ -215,7 +208,7 @@ export default function RequestDetail() {
           </div>
 
           {isCustomer && bids.length > 0 && request.status !== "confirmed" && (
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">{bids.length} bid{bids.length > 1 ? "s" : ""} received</span>
                 <span className="text-primary font-semibold">
@@ -227,7 +220,6 @@ export default function RequestDetail() {
         </CardContent>
       </Card>
 
-      {/* Map showing bidding providers */}
       {mapProviders.length > 0 && (
         <ServiceMap
           center={{ lat: request.location_lat, lng: request.location_lng }}
@@ -236,22 +228,21 @@ export default function RequestDetail() {
         />
       )}
 
-      {/* Ranked bids */}
       <div>
         <h2 className="font-heading text-lg font-semibold mb-3 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          Bids {bids.length > 0 && <span className="text-muted-foreground font-normal">({bids.length})</span>}
+          Bids {bids.length > 0 && <span className="text-muted-foreground font-normal text-sm">({bids.length})</span>}
         </h2>
 
         {bids.length === 0 && (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center py-8 text-center">
-              <Banknote className="h-8 w-8 text-muted-foreground/40 mb-2" />
+            <CardContent className="flex flex-col items-center py-10 text-center">
+              <Banknote className="h-8 w-8 text-muted-foreground/30 mb-2" />
               <p className="text-sm text-muted-foreground">
                 {isCustomer ? "Waiting for providers to bid..." : "Be the first to bid!"}
               </p>
               {isCustomer && (
-                <p className="text-xs text-muted-foreground/60 mt-1">Bids will appear here instantly with AI ranking</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Bids appear here instantly with AI ranking</p>
               )}
             </CardContent>
           </Card>
@@ -273,14 +264,10 @@ export default function RequestDetail() {
         </div>
       </div>
 
-      {/* Price suggestion + Bid form for providers */}
       {isProvider && !alreadyBid && request.status !== "confirmed" && (
         <>
-          <PriceSuggestion
-            category={request.category}
-            onAcceptPrice={(p) => setPrice(p.toString())}
-          />
-          <Card className="border-primary/20">
+          <PriceSuggestion category={request.category} onAcceptPrice={(p) => setPrice(p.toString())} />
+          <Card className="border-primary/20 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Send className="h-5 w-5 text-primary" />
@@ -292,38 +279,18 @@ export default function RequestDetail() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Price (CHF)</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      placeholder="e.g. 45"
-                      required
-                    />
+                    <Input type="number" min="1" step="1" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 45" required />
                   </div>
                   <div className="space-y-2">
                     <Label>Est. Wait (min)</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="5"
-                      value={estimatedWait}
-                      onChange={(e) => setEstimatedWait(e.target.value)}
-                      placeholder="e.g. 15"
-                    />
+                    <Input type="number" min="0" step="5" value={estimatedWait} onChange={(e) => setEstimatedWait(e.target.value)} placeholder="e.g. 15" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Message (optional)</Label>
-                  <Textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="e.g. 15 years experience, can come to you..."
-                    rows={2}
-                  />
+                  <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="e.g. 15 years experience, can come to you..." rows={2} />
                 </div>
-                <Button type="submit" disabled={submitting}>
+                <Button type="submit" disabled={submitting} className="rounded-xl">
                   {submitting ? "Submitting..." : "Submit Bid"}
                 </Button>
               </form>
@@ -339,6 +306,6 @@ export default function RequestDetail() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </motion.div>
   );
 }

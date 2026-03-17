@@ -4,9 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, User, CheckCircle2, ArrowLeft } from "lucide-react";
+import { MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper } from "lucide-react";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { PageLoader } from "@/components/LoadingSkeleton";
 
 export default function BookingConfirmation() {
   const { requestId } = useParams<{ requestId: string }>();
@@ -45,13 +47,7 @@ export default function BookingConfirmation() {
     setLoading(false);
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
+  if (loading) return <PageLoader />;
 
   if (!booking) {
     return (
@@ -73,62 +69,94 @@ export default function BookingConfirmation() {
         Back to Dashboard
       </Link>
 
-      <div className="text-center animate-fade-in-up">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="text-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10"
+        >
           <CheckCircle2 className="h-8 w-8 text-success" />
-        </div>
+        </motion.div>
         <h1 className="font-heading text-2xl font-bold">Booking Confirmed!</h1>
-        <p className="text-muted-foreground mt-1">Your appointment has been booked</p>
-      </div>
+        <p className="text-muted-foreground mt-1 flex items-center justify-center gap-1.5">
+          <PartyPopper className="h-4 w-4" /> Your appointment has been booked
+        </p>
+      </motion.div>
 
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Service</span>
-              <span className="font-medium flex items-center gap-1.5">
-                <span>{cat.emoji}</span>
-                {request.title}
-              </span>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >
+        <Card className="shadow-md">
+          <CardContent className="p-6 space-y-4">
+            <div className="space-y-3">
+              {[
+                {
+                  label: "Service",
+                  value: (
+                    <span className="font-medium flex items-center gap-1.5">
+                      <span>{cat.emoji}</span>
+                      {request.title}
+                    </span>
+                  ),
+                },
+                {
+                  label: "Price",
+                  value: (
+                    <span className="font-heading text-xl font-bold text-primary">
+                      CHF {Number(booking.bids?.price || booking.final_price_chf || 0).toFixed(0)}
+                    </span>
+                  ),
+                },
+                {
+                  label: (
+                    <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />Location</span>
+                  ),
+                  value: <span className="font-medium">{request.location_name}</span>,
+                },
+                {
+                  label: (
+                    <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />When</span>
+                  ),
+                  value: <span className="font-medium">{format(new Date(request.requested_time), "EEE, MMM d 'at' HH:mm")}</span>,
+                },
+                {
+                  label: (
+                    <span className="flex items-center gap-1.5">
+                      <User className="h-4 w-4" />
+                      {isCustomer ? "Provider" : "Customer"}
+                    </span>
+                  ),
+                  value: (
+                    <span className="font-medium">
+                      {isCustomer ? booking.provider?.display_name : booking.customer?.display_name}
+                    </span>
+                  ),
+                },
+              ].map((row, i) => (
+                <div key={i}>
+                  {i > 0 && <div className="h-px bg-border mb-3" />}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">{row.label}</span>
+                    {row.value}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Price</span>
-              <span className="font-heading text-xl font-bold text-primary">
-                CHF {Number(booking.bids?.price || booking.final_price_chf || 0).toFixed(0)}
-              </span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" />Location
-              </span>
-              <span className="font-medium">{request.location_name}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />When
-              </span>
-              <span className="font-medium">{format(new Date(request.requested_time), "EEE, MMM d 'at' HH:mm")}</span>
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <User className="h-4 w-4" />
-                {isCustomer ? cat.label : "Customer"}
-              </span>
-              <span className="font-medium">
-                {isCustomer ? booking.provider?.display_name : booking.customer?.display_name}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-      <div className="text-center text-sm text-muted-foreground">
-        <p>A confirmation has been sent to both parties.</p>
-      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        A confirmation has been sent to both parties.
+      </p>
     </div>
   );
 }
