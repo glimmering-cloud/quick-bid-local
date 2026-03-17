@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Moon, Sun, User, Shield, Save } from "lucide-react";
+import { Moon, Sun, User, Shield, Save, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Settings() {
   const { profile, updateProfile, user } = useAuth();
@@ -33,12 +34,7 @@ export default function Settings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateProfile({
-        display_name: displayName,
-        bio,
-        phone,
-        location_name: locationName,
-      });
+      await updateProfile({ display_name: displayName, bio, phone, location_name: locationName });
       toast.success("Profile updated successfully");
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
@@ -48,16 +44,21 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="mx-auto max-w-2xl space-y-6"
+    >
       <div>
         <h1 className="font-heading text-2xl font-bold">Account Settings</h1>
         <p className="text-sm text-muted-foreground">Manage your profile and preferences</p>
       </div>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="h-4 w-4" />
+            <User className="h-4 w-4 text-primary" />
             Profile Information
           </CardTitle>
           <CardDescription>Update your personal details</CardDescription>
@@ -68,59 +69,36 @@ export default function Settings() {
             <Input id="email" value={user?.email || ""} disabled className="bg-muted" />
             <p className="text-xs text-muted-foreground">Email cannot be changed</p>
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="displayName">Display Name</Label>
-            <Input
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your name"
-            />
+            <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell us about yourself..."
-              rows={3}
-            />
+            <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself..." rows={3} />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+41 79 123 45 67"
-            />
+            <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+41 79 123 45 67" />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              placeholder="e.g. Zurich, Switzerland"
-            />
+            <Input id="location" value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="e.g. Zurich, Switzerland" />
           </div>
-
-          <Button onClick={handleSave} disabled={saving} className="w-full">
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? "Saving..." : "Save Changes"}
+          <Button onClick={handleSave} disabled={saving} className="w-full rounded-xl">
+            {saving ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
+            ) : (
+              <><Save className="mr-2 h-4 w-4" />Save Changes</>
+            )}
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            {theme === "dark" ? <Moon className="h-4 w-4 text-primary" /> : <Sun className="h-4 w-4 text-primary" />}
             Appearance
           </CardTitle>
           <CardDescription>Customize the look and feel</CardDescription>
@@ -131,18 +109,15 @@ export default function Settings() {
               <p className="text-sm font-medium">Dark Mode</p>
               <p className="text-xs text-muted-foreground">Switch between light and dark themes</p>
             </div>
-            <Switch
-              checked={theme === "dark"}
-              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-            />
+            <Switch checked={theme === "dark"} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} />
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Shield className="h-4 w-4" />
+            <Shield className="h-4 w-4 text-primary" />
             Account
           </CardTitle>
           <CardDescription>Account details and role</CardDescription>
@@ -157,12 +132,10 @@ export default function Settings() {
           <Separator />
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Member since</span>
-            <span className="text-sm">
-              {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "—"}
-            </span>
+            <span className="text-sm">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "—"}</span>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
