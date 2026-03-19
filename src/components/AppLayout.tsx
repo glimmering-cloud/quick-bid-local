@@ -2,11 +2,12 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoles } from "@/hooks/useRoles";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, LayoutDashboard, Settings, Menu, X } from "lucide-react";
+import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, profile, signOut } = useAuth();
+  const { isStaff } = useRoles();
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -51,6 +53,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 >
                   <LayoutDashboard className="mr-1.5 h-4 w-4" />
                   {t("nav.dashboard")}
+                </Button>
+              </Link>
+            )}
+            {user && isStaff && (
+              <Link to="/management">
+                <Button
+                  variant={location.pathname === "/management" ? "secondary" : "ghost"}
+                  size="sm"
+                >
+                  <Shield className="mr-1.5 h-4 w-4" />
+                  Management
                 </Button>
               </Link>
             )}
@@ -125,6 +138,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <LayoutDashboard className="h-4 w-4" />
                   {t("nav.dashboard")}
                 </Link>
+                {isStaff && (
+                  <Link
+                    to="/management"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Management
+                  </Link>
+                )}
                 <Link
                   to="/settings"
                   onClick={() => setMobileOpen(false)}

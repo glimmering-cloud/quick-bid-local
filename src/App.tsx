@@ -12,6 +12,7 @@ import ProviderDashboard from "./pages/ProviderDashboard";
 import RequestDetail from "./pages/RequestDetail";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import Settings from "./pages/Settings";
+import ManagementDashboard from "./pages/ManagementDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="/request/:id" element={<ProtectedRoute><RequestDetail /></ProtectedRoute>} />
         <Route path="/booking/:requestId" element={<ProtectedRoute><BookingConfirmation /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/management" element={<ProtectedRoute><ManagementDashboard /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>

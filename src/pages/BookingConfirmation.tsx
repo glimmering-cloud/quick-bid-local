@@ -4,17 +4,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper } from "lucide-react";
+import { MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper, Star } from "lucide-react";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { PageLoader } from "@/components/LoadingSkeleton";
+import { ReviewForm } from "@/components/ReviewForm";
+import { ComplaintForm } from "@/components/ComplaintForm";
 
 export default function BookingConfirmation() {
   const { requestId } = useParams<{ requestId: string }>();
   const { user } = useAuth();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [existingReview, setExistingReview] = useState(false);
 
   useEffect(() => {
     if (!requestId || !user) return;
@@ -44,6 +47,18 @@ export default function BookingConfirmation() {
       provider: providerProfile,
       customer: customerProfile,
     });
+
+    // Check if user already reviewed
+    if (user) {
+      const { data: review } = await supabase
+        .from("reviews")
+        .select("id")
+        .eq("booking_id", bookingData.id)
+        .eq("reviewer_id", user.id)
+        .maybeSingle();
+      setExistingReview(!!review);
+    }
+
     setLoading(false);
   };
 
@@ -153,6 +168,29 @@ export default function BookingConfirmation() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {booking.status === "completed" && (
+        <div className="flex items-center justify-center gap-3">
+          {!existingReview && (
+            <ReviewForm
+              bookingId={booking.id}
+              revieweeId={isCustomer ? booking.provider_id : booking.customer_id}
+              revieweeName={isCustomer ? booking.provider?.display_name : booking.customer?.display_name}
+              onSubmitted={() => setExistingReview(true)}
+            />
+          )}
+          {existingReview && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              Review submitted
+            </div>
+          )}
+          <ComplaintForm
+            bookingId={booking.id}
+            reportedUserId={isCustomer ? booking.provider_id : booking.customer_id}
+          />
+        </div>
+      )}
 
       <p className="text-center text-sm text-muted-foreground">
         A confirmation has been sent to both parties.
