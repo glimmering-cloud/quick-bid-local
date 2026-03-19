@@ -169,6 +169,29 @@ export default function BookingConfirmation() {
         </Card>
       </motion.div>
 
+      {booking.status === "completed" && (
+        <div className="flex items-center justify-center gap-3">
+          {!existingReview && (
+            <ReviewForm
+              bookingId={booking.id}
+              revieweeId={isCustomer ? booking.provider_id : booking.customer_id}
+              revieweeName={isCustomer ? booking.provider?.display_name : booking.customer?.display_name}
+              onSubmitted={() => setExistingReview(true)}
+            />
+          )}
+          {existingReview && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              Review submitted
+            </div>
+          )}
+          <ComplaintForm
+            bookingId={booking.id}
+            reportedUserId={isCustomer ? booking.provider_id : booking.customer_id}
+          />
+        </div>
+      )}
+
       <p className="text-center text-sm text-muted-foreground">
         A confirmation has been sent to both parties.
       </p>
