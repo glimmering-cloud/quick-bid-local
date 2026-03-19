@@ -26,9 +26,11 @@ import { Moon, Sun, User, Shield, Save, Loader2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Settings() {
-  const { profile, updateProfile, user } = useAuth();
+  const { profile, updateProfile, user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
