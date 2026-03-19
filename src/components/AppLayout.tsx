@@ -138,6 +138,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <LayoutDashboard className="h-4 w-4" />
                   {t("nav.dashboard")}
                 </Link>
+                {isStaff && (
+                  <Link
+                    to="/management"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Management
+                  </Link>
+                )}
                 <Link
                   to="/settings"
                   onClick={() => setMobileOpen(false)}
