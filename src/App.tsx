@@ -37,6 +37,7 @@ function AppRoutes() {
         <Route path="/request/:id" element={<ProtectedRoute><RequestDetail /></ProtectedRoute>} />
         <Route path="/booking/:requestId" element={<ProtectedRoute><BookingConfirmation /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/management" element={<ProtectedRoute><ManagementDashboard /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
