@@ -123,7 +123,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
+                  {t("nav.dashboard")}
                 </Link>
                 <Link
                   to="/settings"
@@ -131,19 +131,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
                 >
                   <Settings className="h-4 w-4" />
-                  Account Settings
+                  {t("nav.settings")}
                 </Link>
                 <button
                   onClick={() => { handleSignOut(); setMobileOpen(false); }}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
-                  Sign Out
+                  {t("nav.signOut")}
                 </button>
               </>
             ) : (
               <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full">Sign In</Button>
+                <Button className="w-full">{t("nav.signIn")}</Button>
               </Link>
             )}
           </div>
