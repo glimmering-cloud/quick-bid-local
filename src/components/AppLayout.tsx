@@ -56,6 +56,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </Button>
               </Link>
             )}
+            {user && isStaff && (
+              <Link to="/management">
+                <Button
+                  variant={location.pathname === "/management" ? "secondary" : "ghost"}
+                  size="sm"
+                >
+                  <Shield className="mr-1.5 h-4 w-4" />
+                  Management
+                </Button>
+              </Link>
+            )}
             <LanguageSwitcher />
             <ThemeToggle />
             {user && profile ? (
