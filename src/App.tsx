@@ -12,6 +12,7 @@ import ProviderDashboard from "./pages/ProviderDashboard";
 import RequestDetail from "./pages/RequestDetail";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import Settings from "./pages/Settings";
+import ManagementDashboard from "./pages/ManagementDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
