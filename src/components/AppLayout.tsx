@@ -18,6 +18,7 @@ import {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, profile, signOut } = useAuth();
+  const { isStaff } = useRoles();
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
