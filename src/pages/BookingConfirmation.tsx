@@ -47,6 +47,18 @@ export default function BookingConfirmation() {
       provider: providerProfile,
       customer: customerProfile,
     });
+
+    // Check if user already reviewed
+    if (user) {
+      const { data: review } = await supabase
+        .from("reviews")
+        .select("id")
+        .eq("booking_id", bookingData.id)
+        .eq("reviewer_id", user.id)
+        .maybeSingle();
+      setExistingReview(!!review);
+    }
+
     setLoading(false);
   };
 
