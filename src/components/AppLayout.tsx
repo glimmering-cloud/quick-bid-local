@@ -1,10 +1,12 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, User, LayoutDashboard, Settings, Menu, X } from "lucide-react";
+import { Zap, LogOut, LayoutDashboard, Settings, Menu, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ import {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, profile, signOut } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -47,10 +50,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   size="sm"
                 >
                   <LayoutDashboard className="mr-1.5 h-4 w-4" />
-                  Dashboard
+                  {t("nav.dashboard")}
                 </Button>
               </Link>
             )}
+            <LanguageSwitcher />
             <ThemeToggle />
             {user && profile ? (
               <DropdownMenu>
@@ -69,24 +73,25 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   </div>
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     <Settings className="mr-2 h-4 w-4" />
-                    Account Settings
+                    {t("nav.settings")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
+                    {t("nav.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Link to="/auth">
-                <Button size="sm">Sign In</Button>
+                <Button size="sm">{t("nav.signIn")}</Button>
               </Link>
             )}
           </nav>
 
           {/* Mobile hamburger */}
           <div className="flex items-center gap-2 sm:hidden">
+            <LanguageSwitcher />
             <ThemeToggle />
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -118,7 +123,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
+                  {t("nav.dashboard")}
                 </Link>
                 <Link
                   to="/settings"
@@ -126,19 +131,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
                 >
                   <Settings className="h-4 w-4" />
-                  Account Settings
+                  {t("nav.settings")}
                 </Link>
                 <button
                   onClick={() => { handleSignOut(); setMobileOpen(false); }}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
-                  Sign Out
+                  {t("nav.signOut")}
                 </button>
               </>
             ) : (
               <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                <Button className="w-full">Sign In</Button>
+                <Button className="w-full">{t("nav.signIn")}</Button>
               </Link>
             )}
           </div>
