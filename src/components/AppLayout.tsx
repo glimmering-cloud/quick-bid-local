@@ -2,11 +2,12 @@ import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoles } from "@/hooks/useRoles";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, LayoutDashboard, Settings, Menu, X } from "lucide-react";
+import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
