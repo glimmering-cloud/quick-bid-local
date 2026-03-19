@@ -84,7 +84,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </DropdownMenu>
             ) : (
               <Link to="/auth">
-                <Button size="sm">Sign In</Button>
+                <Button size="sm">{t("nav.signIn")}</Button>
               </Link>
             )}
           </nav>
