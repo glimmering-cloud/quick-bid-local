@@ -109,6 +109,59 @@ export type Database = {
           },
         ]
       }
+      complaints: {
+        Row: {
+          assigned_to: string | null
+          booking_id: string | null
+          category: Database["public"]["Enums"]["complaint_category"]
+          created_at: string
+          description: string
+          id: string
+          reported_user_id: string | null
+          reporter_id: string
+          resolution_note: string | null
+          status: Database["public"]["Enums"]["complaint_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          booking_id?: string | null
+          category: Database["public"]["Enums"]["complaint_category"]
+          created_at?: string
+          description: string
+          id?: string
+          reported_user_id?: string | null
+          reporter_id: string
+          resolution_note?: string | null
+          status?: Database["public"]["Enums"]["complaint_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          booking_id?: string | null
+          category?: Database["public"]["Enums"]["complaint_category"]
+          created_at?: string
+          description?: string
+          id?: string
+          reported_user_id?: string | null
+          reporter_id?: string
+          resolution_note?: string | null
+          status?: Database["public"]["Enums"]["complaint_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaints_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -223,6 +276,44 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          reviewee_id: string
+          reviewer_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          reviewee_id: string
+          reviewer_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          reviewee_id?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_requests: {
         Row: {
           category: string
@@ -271,6 +362,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -289,10 +401,25 @@ export type Database = {
           provider_user_id: string
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "admin" | "customer_service" | "moderator"
       bid_status: "pending" | "accepted" | "rejected" | "withdrawn"
       booking_status: "confirmed" | "completed" | "cancelled"
+      complaint_category:
+        | "service_quality"
+        | "payment_dispute"
+        | "no_show"
+        | "inappropriate_behavior"
+      complaint_status: "open" | "in_progress" | "resolved" | "dismissed"
       request_status:
         | "open"
         | "bidding"
@@ -427,8 +554,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "customer_service", "moderator"],
       bid_status: ["pending", "accepted", "rejected", "withdrawn"],
       booking_status: ["confirmed", "completed", "cancelled"],
+      complaint_category: [
+        "service_quality",
+        "payment_dispute",
+        "no_show",
+        "inappropriate_behavior",
+      ],
+      complaint_status: ["open", "in_progress", "resolved", "dismissed"],
       request_status: [
         "open",
         "bidding",
