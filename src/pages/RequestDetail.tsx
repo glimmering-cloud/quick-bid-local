@@ -122,6 +122,16 @@ export default function RequestDetail() {
   const handleAcceptBid = async (bid: BidWithProfile) => {
     if (!user || !request) return;
 
+    const { error: acceptError } = await supabase
+      .from("bids")
+      .update({ status: "accepted" as any })
+      .eq("id", bid.id);
+
+    if (acceptError) {
+      toast.error(acceptError.message);
+      return;
+    }
+
     const { error: bookingError } = await supabase.from("bookings").insert({
       request_id: request.id,
       bid_id: bid.id,
@@ -130,13 +140,21 @@ export default function RequestDetail() {
       final_price_chf: Number(bid.price),
     });
 
-    if (bookingError) { toast.error(bookingError.message); return; }
+    if (bookingError) {
+      await supabase.from("bids").update({ status: "pending" as any }).eq("id", bid.id);
+      toast.error(bookingError.message);
+      return;
+    }
 
-    await Promise.all([
+    const [requestUpdate, rejectOthers] = await Promise.all([
       supabase.from("service_requests").update({ status: "confirmed" as any }).eq("id", request.id),
-      supabase.from("bids").update({ status: "accepted" as any }).eq("id", bid.id),
       supabase.from("bids").update({ status: "rejected" as any }).eq("request_id", request.id).neq("id", bid.id),
     ]);
+
+    if (requestUpdate.error || rejectOthers.error) {
+      toast.error(requestUpdate.error?.message || rejectOthers.error?.message || "Booking completed with partial update");
+      return;
+    }
 
     toast.success(`Booking confirmed with ${bid.profiles?.display_name}!`);
     navigate(`/booking/${request.id}`);
