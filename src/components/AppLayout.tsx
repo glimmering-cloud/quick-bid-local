@@ -50,10 +50,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   size="sm"
                 >
                   <LayoutDashboard className="mr-1.5 h-4 w-4" />
-                  Dashboard
+                  {t("nav.dashboard")}
                 </Button>
               </Link>
             )}
+            <LanguageSwitcher />
             <ThemeToggle />
             {user && profile ? (
               <DropdownMenu>
