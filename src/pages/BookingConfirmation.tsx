@@ -17,6 +17,7 @@ export default function BookingConfirmation() {
   const { user } = useAuth();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [existingReview, setExistingReview] = useState(false);
 
   useEffect(() => {
     if (!requestId || !user) return;
