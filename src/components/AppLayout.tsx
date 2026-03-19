@@ -17,6 +17,7 @@ import {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, profile, signOut } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
