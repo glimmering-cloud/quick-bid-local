@@ -4,11 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper } from "lucide-react";
+import { MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper, Star } from "lucide-react";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { PageLoader } from "@/components/LoadingSkeleton";
+import { ReviewForm } from "@/components/ReviewForm";
+import { ComplaintForm } from "@/components/ComplaintForm";
 
 export default function BookingConfirmation() {
   const { requestId } = useParams<{ requestId: string }>();
