@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sparkles, Loader2 } from "lucide-react";
@@ -20,17 +21,18 @@ interface NaturalLanguageInputProps {
   onParsed: (parsed: ParsedRequest) => void;
 }
 
-const EXAMPLES = [
-  "I need a haircut near Zurich station at 4 PM",
-  "I need a plumber for a leaking sink",
-  "AC cleaning needed tomorrow morning",
-  "Electrician needed near Oerlikon",
-  "Home cleaning this weekend near Altstetten",
-];
-
 export function NaturalLanguageInput({ onParsed }: NaturalLanguageInputProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [parsing, setParsing] = useState(false);
+
+  const EXAMPLES = [
+    "I need a haircut near Zurich station at 4 PM",
+    "Plumber needed in Bern tomorrow morning",
+    "AC cleaning in Lausanne this weekend",
+    "Electrician needed near Genève Cornavin",
+    "Home cleaning in Zurich Oerlikon",
+  ];
 
   const handleParse = async () => {
     if (!text.trim()) return;
@@ -42,13 +44,13 @@ export function NaturalLanguageInput({ onParsed }: NaturalLanguageInputProps) {
       if (error) throw error;
       if (data?.parsed) {
         onParsed(data.parsed);
-        toast.success("Request parsed! Review and submit below.");
+        toast.success(t("nlp.parsed"));
         setText("");
       } else {
-        toast.error("Could not parse your request. Try being more specific.");
+        toast.error(t("nlp.parseFailed"));
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to parse request");
+      toast.error(err.message || t("nlp.parseFailed"));
     }
     setParsing(false);
   };
@@ -59,7 +61,7 @@ export function NaturalLanguageInput({ onParsed }: NaturalLanguageInputProps) {
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Describe what you need... e.g. 'I need a plumber near Zurich HB tomorrow at 10 AM'"
+          placeholder={t("nlp.placeholder")}
           rows={2}
           className="pr-24 resize-none"
         />
@@ -70,7 +72,7 @@ export function NaturalLanguageInput({ onParsed }: NaturalLanguageInputProps) {
           className="absolute right-2 bottom-2"
         >
           {parsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
-          {parsing ? "Parsing..." : "AI Parse"}
+          {parsing ? t("nlp.parsing") : t("nlp.parse")}
         </Button>
       </div>
       <div className="flex flex-wrap gap-1.5">

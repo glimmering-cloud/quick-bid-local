@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 export default function Auth() {
+  const { t } = useTranslation();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,10 +27,10 @@ export default function Auth() {
     try {
       if (isSignUp) {
         await signUp(email, password, displayName, role);
-        toast.success("Account created! Check your email to confirm.");
+        toast.success(t("auth.accountCreated"));
       } else {
         await signIn(email, password);
-        toast.success("Welcome back!");
+        toast.success(t("auth.welcomeBackToast"));
       }
     } catch (err: any) {
       toast.error(err.message);
@@ -51,10 +53,10 @@ export default function Auth() {
               <Zap className="h-7 w-7 text-primary-foreground" />
             </div>
             <CardTitle className="font-heading text-2xl">
-              {isSignUp ? "Create Account" : "Welcome Back"}
+              {isSignUp ? t("auth.createAccount") : t("auth.welcomeBack")}
             </CardTitle>
             <CardDescription className="text-sm">
-              {isSignUp ? "Join QuickServe — Zurich's local services marketplace" : "Sign in to your QuickServe account"}
+              {isSignUp ? t("auth.signUpSubtitle") : t("auth.signInSubtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
@@ -67,21 +69,21 @@ export default function Auth() {
                   className="space-y-4"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="name">Display Name</Label>
+                    <Label htmlFor="name">{t("auth.displayName")}</Label>
                     <Input
                       id="name"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Your name"
+                      placeholder={t("auth.namePlaceholder")}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>I am a...</Label>
+                    <Label>{t("auth.iAmA")}</Label>
                     <div className="grid grid-cols-2 gap-3">
                       {([
-                        { value: "customer" as const, label: "Customer", icon: User, desc: "Find services" },
-                        { value: "provider" as const, label: "Provider", icon: Briefcase, desc: "Offer services" },
+                        { value: "customer" as const, label: t("auth.customer"), icon: User, desc: t("auth.findServices") },
+                        { value: "provider" as const, label: t("auth.provider"), icon: Briefcase, desc: t("auth.offerServices") },
                       ]).map((opt) => (
                         <button
                           key={opt.value}
@@ -105,7 +107,7 @@ export default function Auth() {
                 </motion.div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -116,7 +118,7 @@ export default function Auth() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -131,10 +133,10 @@ export default function Auth() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isSignUp ? "Creating..." : "Signing in..."}
+                    {isSignUp ? t("auth.creating") : t("auth.signingIn")}
                   </>
                 ) : (
-                  isSignUp ? "Create Account" : "Sign In"
+                  isSignUp ? t("auth.createAccount") : t("nav.signIn")
                 )}
               </Button>
             </form>
@@ -143,8 +145,8 @@ export default function Auth() {
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                {isSignUp ? "Already have an account? " : "Don't have an account? "}
-                <span className="font-medium text-primary">{isSignUp ? "Sign in" : "Sign up"}</span>
+                {isSignUp ? t("auth.alreadyHaveAccount") + " " : t("auth.dontHaveAccount") + " "}
+                <span className="font-medium text-primary">{isSignUp ? t("auth.signIn") : t("auth.signUp")}</span>
               </button>
             </div>
           </CardContent>

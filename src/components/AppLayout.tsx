@@ -63,7 +63,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   size="sm"
                 >
                   <Shield className="mr-1.5 h-4 w-4" />
-                  Management
+                  {t("nav.management")}
                 </Button>
               </Link>
             )}
@@ -145,7 +145,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
                   >
                     <Shield className="h-4 w-4" />
-                    Management
+                    {t("nav.management")}
                   </Link>
                 )}
                 <Link

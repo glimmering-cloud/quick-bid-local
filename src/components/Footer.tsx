@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Zap } from "lucide-react";
 
 export function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="border-t bg-card/50 mt-auto">
       <div className="container py-12">
@@ -14,21 +17,21 @@ export function Footer() {
               QuickServe
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              AI-powered local services marketplace. Find trusted providers near you in Zurich.
+              {t("footer.tagline")}
             </p>
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-heading text-sm font-semibold">Platform</h4>
+            <h4 className="font-heading text-sm font-semibold">{t("footer.platform")}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/" className="hover:text-foreground transition-colors">How it Works</Link></li>
-              <li><Link to="/auth" className="hover:text-foreground transition-colors">Get Started</Link></li>
-              <li><Link to="/auth" className="hover:text-foreground transition-colors">Become a Provider</Link></li>
+              <li><Link to="/" className="hover:text-foreground transition-colors">{t("footer.howItWorks")}</Link></li>
+              <li><Link to="/auth" className="hover:text-foreground transition-colors">{t("footer.getStarted")}</Link></li>
+              <li><Link to="/auth" className="hover:text-foreground transition-colors">{t("footer.becomeProvider")}</Link></li>
             </ul>
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-heading text-sm font-semibold">Services</h4>
+            <h4 className="font-heading text-sm font-semibold">{t("footer.servicesTitle")}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>Haircut & Barber</li>
               <li>Plumbing</li>
@@ -38,21 +41,21 @@ export function Footer() {
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-heading text-sm font-semibold">Support</h4>
+            <h4 className="font-heading text-sm font-semibold">{t("footer.support")}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/settings" className="hover:text-foreground transition-colors">Account Settings</Link></li>
-              <li><span className="cursor-default">Privacy Policy</span></li>
-              <li><span className="cursor-default">Terms of Service</span></li>
+              <li><Link to="/settings" className="hover:text-foreground transition-colors">{t("footer.accountSettings")}</Link></li>
+              <li><span className="cursor-default">{t("footer.privacy")}</span></li>
+              <li><span className="cursor-default">{t("footer.terms")}</span></li>
             </ul>
           </div>
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} QuickServe. All rights reserved.
+            © {new Date().getFullYear()} QuickServe. {t("footer.rights")}
           </p>
           <p className="text-xs text-muted-foreground">
-            Built for Zurich 🇨🇭
+            {t("footer.builtFor")}
           </p>
         </div>
       </div>

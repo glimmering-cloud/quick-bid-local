@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -18,36 +19,16 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
-const STATS = [
-  { value: "500+", label: "Service Providers", icon: "👷" },
-  { value: "< 30s", label: "Avg Response Time", icon: "⚡" },
-  { value: "4.8★", label: "Customer Rating", icon: "⭐" },
-  { value: "Zurich", label: "City Coverage", icon: "🇨🇭" },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Lena M.",
-    role: "Customer",
-    text: "Found a plumber in under 2 minutes. The bidding system saved me CHF 80 compared to my usual repair service.",
-    rating: 5,
-  },
-  {
-    name: "Marco B.",
-    role: "Barber / Provider",
-    text: "I get new clients every day through QuickServe. The AI pricing suggestions help me stay competitive.",
-    rating: 5,
-  },
-  {
-    name: "Sarah K.",
-    role: "Customer",
-    text: "Best home services app in Zurich. Real-time bids, transparent pricing, and I can see provider ratings before booking.",
-    rating: 5,
-  },
-];
-
 export default function Index() {
   const { user, profile } = useAuth();
+  const { t } = useTranslation();
+
+  const STATS = [
+    { value: "500+", label: t("stats.providers"), icon: "👷" },
+    { value: "< 30s", label: t("stats.responseTime"), icon: "⚡" },
+    { value: "4.8★", label: t("stats.rating"), icon: "⭐" },
+    { value: t("stats.coverageValue"), label: t("stats.coverage"), icon: "🇨🇭" },
+  ];
 
   return (
     <div className="flex flex-col items-center -mt-6">
@@ -71,9 +52,9 @@ export default function Index() {
             transition={{ duration: 0.5 }}
             className="font-heading text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.08]"
           >
-            Local services,{" "}
+            {t("hero.title1")}{" "}
             <span className="text-primary relative">
-              delivered fast.
+              {t("hero.title2")}
               <svg className="absolute -bottom-1 left-0 w-full h-2 text-primary/30" viewBox="0 0 200 8" preserveAspectRatio="none">
                 <path d="M0 7 Q50 0 100 5 Q150 0 200 7" stroke="currentColor" strokeWidth="2.5" fill="none" />
               </svg>
@@ -84,7 +65,7 @@ export default function Index() {
             transition={{ duration: 0.5 }}
             className="mt-5 text-base sm:text-lg text-muted-foreground max-w-lg leading-relaxed"
           >
-            Post your request. Nearby providers compete with real-time bids. AI ranks them by price, distance, rating & speed.
+            {t("hero.subtitle")}
           </motion.p>
           <motion.div variants={fadeUp} transition={{ duration: 0.5 }} className="mt-6 flex flex-wrap justify-center gap-2">
             {SERVICE_CATEGORIES.slice(0, 5).map((cat) => (
@@ -103,7 +84,7 @@ export default function Index() {
             {user && profile ? (
               <Link to={profile.role === "provider" ? "/provider" : "/dashboard"}>
                 <Button size="lg" className="gap-2 text-base px-8 h-12 rounded-xl">
-                  Go to Dashboard
+                  {t("hero.goToDashboard")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -111,13 +92,13 @@ export default function Index() {
               <>
                 <Link to="/auth">
                   <Button size="lg" className="gap-2 text-base px-8 h-12 rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 transition-shadow">
-                    Get Started Free
+                    {t("hero.getStarted")}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link to="/auth">
                   <Button size="lg" variant="outline" className="gap-2 text-base px-8 h-12 rounded-xl">
-                    I'm a Provider
+                    {t("hero.imProvider")}
                     <Shield className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -166,30 +147,18 @@ export default function Index() {
         <div className="container max-w-4xl">
           <motion.div variants={fadeUp} transition={{ duration: 0.4 }} className="text-center mb-14">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
-              <Sparkles className="h-3 w-3" /> Simple process
+              <Sparkles className="h-3 w-3" /> {t("howItWorks.badge")}
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold">How it works</h2>
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold">{t("howItWorks.title")}</h2>
             <p className="text-muted-foreground mt-3 max-w-md mx-auto">
-              From request to booked provider in under 60 seconds
+              {t("howItWorks.subtitle")}
             </p>
           </motion.div>
           <div className="grid sm:grid-cols-3 gap-8">
             {[
-              {
-                icon: Sparkles,
-                title: "Describe your need",
-                desc: "Type in plain language or pick a category. Our AI parses your request — service type, time, and location.",
-              },
-              {
-                icon: Zap,
-                title: "Get real-time bids",
-                desc: "Nearby providers see your request instantly and submit competitive price offers in CHF.",
-              },
-              {
-                icon: CheckCircle2,
-                title: "Book the best",
-                desc: "AI ranks bids by price, distance, rating & speed. One tap to confirm your booking.",
-              },
+              { icon: Sparkles, title: t("howItWorks.step1Title"), desc: t("howItWorks.step1Desc") },
+              { icon: Zap, title: t("howItWorks.step2Title"), desc: t("howItWorks.step2Desc") },
+              { icon: CheckCircle2, title: t("howItWorks.step3Title"), desc: t("howItWorks.step3Desc") },
             ].map((step, i) => (
               <motion.div
                 key={i}
@@ -222,10 +191,10 @@ export default function Index() {
         <div className="container max-w-4xl">
           <motion.div variants={fadeUp} transition={{ duration: 0.4 }} className="text-center mb-12">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
-              <MapPin className="h-3 w-3" /> Wide coverage
+              <MapPin className="h-3 w-3" /> {t("services.badge")}
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold">Popular Services</h2>
-            <p className="text-muted-foreground mt-3">All the local services you need, one platform</p>
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold">{t("services.title")}</h2>
+            <p className="text-muted-foreground mt-3">{t("services.subtitle")}</p>
           </motion.div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {SERVICE_CATEGORIES.map((cat) => (
@@ -234,7 +203,7 @@ export default function Index() {
                   <CardContent className="flex flex-col items-center gap-2.5 p-6 text-center">
                     <span className="text-3xl group-hover:scale-110 transition-transform duration-300">{cat.emoji}</span>
                     <span className="font-heading text-sm font-semibold">{cat.label}</span>
-                    <span className="text-xs text-muted-foreground">from CHF {cat.avgPrice}</span>
+                    <span className="text-xs text-muted-foreground">{t("services.from")} {cat.avgPrice}</span>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -254,28 +223,32 @@ export default function Index() {
         <div className="container max-w-4xl">
           <motion.div variants={fadeUp} transition={{ duration: 0.4 }} className="text-center mb-12">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
-              <Star className="h-3 w-3" /> Trusted by locals
+              <Star className="h-3 w-3" /> {t("testimonials.badge")}
             </span>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold">What people say</h2>
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold">{t("testimonials.title")}</h2>
           </motion.div>
           <div className="grid sm:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <motion.div key={t.name} variants={fadeUp} transition={{ duration: 0.4 }}>
+            {[
+              { name: "Lena M.", role: "Customer", text: "Found a plumber in under 2 minutes. The bidding system saved me CHF 80 compared to my usual repair service.", rating: 5 },
+              { name: "Marco B.", role: "Barber / Provider", text: "I get new clients every day through QuickServe. The AI pricing suggestions help me stay competitive.", rating: 5 },
+              { name: "Sarah K.", role: "Customer", text: "Best home services app in Switzerland. Real-time bids, transparent pricing, and I can see provider ratings before booking.", rating: 5 },
+            ].map((testimonial) => (
+              <motion.div key={testimonial.name} variants={fadeUp} transition={{ duration: 0.4 }}>
                 <Card className="bg-card h-full hover:shadow-md transition-shadow duration-300">
                   <CardContent className="p-6 space-y-4 flex flex-col h-full">
                     <div className="flex gap-0.5">
-                      {Array.from({ length: t.rating }).map((_, i) => (
+                      {Array.from({ length: testimonial.rating }).map((_, i) => (
                         <Star key={i} className="h-4 w-4 fill-warning text-warning" />
                       ))}
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">"{t.text}"</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">"{testimonial.text}"</p>
                     <div className="flex items-center gap-2.5 pt-3 border-t">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                        {t.name.charAt(0)}
+                        {testimonial.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{t.name}</p>
-                        <p className="text-xs text-muted-foreground">{t.role}</p>
+                        <p className="text-sm font-medium">{testimonial.name}</p>
+                        <p className="text-xs text-muted-foreground">{testimonial.role}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -298,20 +271,20 @@ export default function Index() {
           <div className="container max-w-2xl text-center">
             <motion.div variants={fadeUp} transition={{ duration: 0.5 }}>
               <h2 className="font-heading text-3xl sm:text-4xl font-bold">
-                Ready to get started?
+                {t("cta.title")}
               </h2>
               <p className="text-muted-foreground mt-4 text-lg">
-                Join hundreds of customers and providers on Zurich's fastest-growing services marketplace.
+                {t("cta.subtitle")}
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <Link to="/auth">
                   <Button size="lg" className="gap-2 text-base px-8 h-12 rounded-xl shadow-lg shadow-primary/20">
-                    Create Free Account
+                    {t("cta.button")}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">No credit card required · Free for customers</p>
+              <p className="mt-4 text-xs text-muted-foreground">{t("cta.note")}</p>
             </motion.div>
           </div>
         </motion.section>

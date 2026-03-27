@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,25 +9,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, MapPin, Clock, ChevronRight, Banknote, Sparkles, Zap } from "lucide-react";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
 import { ServiceMap } from "@/components/ServiceMap";
 import { SERVICE_CATEGORIES, getCategoryById } from "@/lib/categories";
+import { LOCATIONS, CITIES, getLocationsByCity } from "@/lib/locations";
 import type { ServiceRequest } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
-const ZURICH_LOCATIONS = [
-  { name: "Zurich HB", lat: 47.3769, lng: 8.5417 },
-  { name: "Zurich Oerlikon", lat: 47.4111, lng: 8.5441 },
-  { name: "Zurich Stadelhofen", lat: 47.3662, lng: 8.5487 },
-  { name: "Zurich Altstetten", lat: 47.3912, lng: 8.4887 },
-  { name: "Zurich Wiedikon", lat: 47.3717, lng: 8.5206 },
-];
-
 export default function CustomerDashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const requestsRef = useRef<ServiceRequest[]>([]);
@@ -38,11 +40,16 @@ export default function CustomerDashboard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("haircut");
+  const [selectedCity, setSelectedCity] = useState(CITIES[0]);
   const [locationIdx, setLocationIdx] = useState(0);
   const [requestedTime, setRequestedTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [providers, setProviders] = useState<any[]>([]);
   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
+
+  const cityLocations = getLocationsByCity(selectedCity);
+  const allLocations = LOCATIONS;
+  const currentLocation = cityLocations[locationIdx] || allLocations[0];
 
   useEffect(() => { requestsRef.current = requests; }, [requests]);
 
@@ -93,9 +100,9 @@ export default function CustomerDashboard() {
         loadBidCounts().then(() => {
           const isOurRequest = requestsRef.current.some(r => r.id === newBid.request_id);
           if (isOurRequest) {
-            toast("🔔 New bid received!", {
-              description: `CHF ${Number(newBid.price).toFixed(0)} for your request`,
-              action: { label: "View", onClick: () => navigate(`/request/${newBid.request_id}`) },
+            toast(`🔔 ${t("dashboard.newBidReceived")}`, {
+              description: `CHF ${Number(newBid.price).toFixed(0)} ${t("dashboard.forYourRequest")}`,
+              action: { label: t("dashboard.view"), onClick: () => navigate(`/request/${newBid.request_id}`) },
             });
           }
         });
@@ -103,7 +110,7 @@ export default function CustomerDashboard() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user, loadRequests, loadProviders, loadBidCounts, navigate]);
+  }, [user, loadRequests, loadProviders, loadBidCounts, navigate, t]);
 
   const handleNLPParsed = (parsed: any) => {
     setTitle(parsed.title || "");
@@ -113,20 +120,26 @@ export default function CustomerDashboard() {
       const dt = new Date(parsed.requested_time);
       setRequestedTime(dt.toISOString().slice(0, 16));
     }
-    const locIdx = ZURICH_LOCATIONS.findIndex(l =>
-      parsed.location_name?.toLowerCase().includes(l.name.toLowerCase().replace("zurich ", ""))
+    // Try to match parsed location to our locations
+    const locIdx = allLocations.findIndex(l =>
+      parsed.location_name?.toLowerCase().includes(l.name.toLowerCase().replace(/^(zurich|bern|lausanne|genève) /i, ""))
     );
-    setLocationIdx(locIdx >= 0 ? locIdx : 0);
+    if (locIdx >= 0) {
+      const loc = allLocations[locIdx];
+      setSelectedCity(loc.city);
+      const cityLocs = getLocationsByCity(loc.city);
+      setLocationIdx(cityLocs.findIndex(cl => cl.name === loc.name));
+    }
     setUseNLP(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (!requestedTime) { toast.error("Please select a date and time"); return; }
+    if (!requestedTime) { toast.error(t("dashboard.selectTime")); return; }
     setSubmitting(true);
 
-    const loc = ZURICH_LOCATIONS[locationIdx];
+    const loc = currentLocation;
     const { error } = await supabase.from("service_requests").insert({
       customer_id: user.id,
       title: title || getCategoryById(category).label,
@@ -144,12 +157,12 @@ export default function CustomerDashboard() {
         const count = matchResult?.matched_count ?? 0;
         if (demoMode) {
           supabase.functions.invoke("simulate-bids", { body: { request_id: allReqs[0].id } });
-          toast.success(`Request posted! ${count > 0 ? `${count} providers notified.` : ""} Demo bids incoming...`);
+          toast.success(`${t("dashboard.posted")} ${count > 0 ? `${count} ${t("dashboard.providersNotified")}` : ""} ${t("dashboard.demoBids")}`);
         } else {
-          toast.success(count > 0 ? `Request posted! ${count} provider${count > 1 ? "s" : ""} nearby notified.` : "Request posted! Providers will see it when they come online.");
+          toast.success(count > 0 ? `${t("dashboard.posted")} ${count} ${count > 1 ? t("dashboard.providersNearby") : t("dashboard.providerNearby")}` : `${t("dashboard.posted")} ${t("dashboard.waitingOnline")}`);
         }
       } else {
-        toast.success("Request posted!");
+        toast.success(t("dashboard.posted"));
       }
       setShowForm(false);
       setTitle(""); setDescription(""); setRequestedTime("");
@@ -175,23 +188,23 @@ export default function CustomerDashboard() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold">My Requests</h1>
-          <p className="text-sm text-muted-foreground">Post a service request and get bids from providers nearby</p>
+          <h1 className="font-heading text-2xl font-bold">{t("dashboard.myRequests")}</h1>
+          <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-1.5">
             <Zap className="h-3.5 w-3.5 text-warning" />
-            <Label htmlFor="demo-mode" className="text-xs text-muted-foreground cursor-pointer">Demo</Label>
+            <Label htmlFor="demo-mode" className="text-xs text-muted-foreground cursor-pointer">{t("dashboard.demo")}</Label>
             <Switch id="demo-mode" checked={demoMode} onCheckedChange={setDemoMode} />
           </div>
           <Button onClick={() => setShowForm(!showForm)} size="sm" className="rounded-xl gap-1.5">
             <Plus className="h-4 w-4" />
-            New Request
+            {t("dashboard.newRequest")}
           </Button>
         </div>
       </div>
 
-      <ServiceMap center={ZURICH_LOCATIONS[locationIdx]} providers={providers} heatmapPoints={heatmapPoints} className="shadow-sm" />
+      <ServiceMap center={currentLocation} providers={providers} heatmapPoints={heatmapPoints} className="shadow-sm" />
 
       <AnimatePresence>
         {showForm && (
@@ -206,10 +219,10 @@ export default function CustomerDashboard() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Sparkles className="h-5 w-5 text-primary" />
-                    New Service Request
+                    {t("dashboard.newServiceRequest")}
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="nlp-toggle" className="text-xs text-muted-foreground">AI Input</Label>
+                    <Label htmlFor="nlp-toggle" className="text-xs text-muted-foreground">{t("dashboard.aiInput")}</Label>
                     <Switch id="nlp-toggle" checked={useNLP} onCheckedChange={setUseNLP} />
                   </div>
                 </div>
@@ -220,7 +233,7 @@ export default function CustomerDashboard() {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Service Category</Label>
+                      <Label>{t("dashboard.serviceCategory")}</Label>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {SERVICE_CATEGORIES.map((cat) => (
                           <button
@@ -237,17 +250,27 @@ export default function CustomerDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Title</Label>
-                      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Haircut, Leaking pipe fix" required />
+                      <Label>{t("dashboard.title")}</Label>
+                      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("dashboard.titlePlaceholder")} required />
                     </div>
                     <div className="space-y-2">
-                      <Label>Details (optional)</Label>
-                      <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Any preferences or notes..." rows={2} />
+                      <Label>{t("dashboard.details")}</Label>
+                      <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("dashboard.detailsPlaceholder")} rows={2} />
                     </div>
                     <div className="space-y-2">
-                      <Label>Location</Label>
+                      <Label>{t("dashboard.location")}</Label>
+                      <Select value={selectedCity} onValueChange={(val) => { setSelectedCity(val); setLocationIdx(0); }}>
+                        <SelectTrigger className="w-full mb-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CITIES.map((city) => (
+                            <SelectItem key={city} value={city}>{city}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        {ZURICH_LOCATIONS.map((loc, i) => (
+                        {cityLocations.map((loc, i) => (
                           <button
                             key={loc.name} type="button" onClick={() => setLocationIdx(i)}
                             className={`rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
@@ -255,20 +278,20 @@ export default function CustomerDashboard() {
                             }`}
                           >
                             <MapPin className="inline h-3.5 w-3.5 mr-1" />
-                            {loc.name.replace("Zurich ", "")}
+                            {loc.name.replace(/^(Zurich|Bern|Lausanne|Genève) /, "")}
                           </button>
                         ))}
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>When</Label>
+                      <Label>{t("dashboard.when")}</Label>
                       <Input type="datetime-local" value={requestedTime} onChange={(e) => setRequestedTime(e.target.value)} required min={new Date().toISOString().slice(0, 16)} />
                     </div>
                     <div className="flex gap-2">
                       <Button type="submit" disabled={submitting} className="rounded-xl">
-                        {submitting ? "Posting..." : "Post Request"}
+                        {submitting ? t("dashboard.posting") : t("dashboard.postRequest")}
                       </Button>
-                      <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+                      <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>{t("dashboard.cancel")}</Button>
                     </div>
                   </form>
                 )}
@@ -282,11 +305,11 @@ export default function CustomerDashboard() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-14 text-center">
             <Sparkles className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground font-medium">No requests yet</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">Post your first service request to get started</p>
+            <p className="text-muted-foreground font-medium">{t("dashboard.noRequests")}</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">{t("dashboard.noRequestsSubtitle")}</p>
             <Button onClick={() => setShowForm(true)} size="sm" variant="outline" className="mt-4 rounded-xl gap-1.5">
               <Plus className="h-4 w-4" />
-              Create Request
+              {t("dashboard.createRequest")}
             </Button>
           </CardContent>
         </Card>
@@ -330,7 +353,7 @@ export default function CustomerDashboard() {
                       {count > 0 && (
                         <span className="flex items-center gap-1 text-primary font-medium">
                           <Banknote className="h-3.5 w-3.5" />
-                          {count} bid{count > 1 ? "s" : ""} · from CHF {lowest?.toFixed(0)}
+                          {count} {t("dashboard.bids")} · {t("dashboard.from")} {lowest?.toFixed(0)}
                         </span>
                       )}
                     </div>
