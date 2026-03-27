@@ -63,7 +63,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   size="sm"
                 >
                   <Shield className="mr-1.5 h-4 w-4" />
-                  Management
+                  {t("nav.management")}
                 </Button>
               </Link>
             )}

@@ -4,7 +4,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ZURICH_LOCATIONS: Record<string, { lat: number; lng: number }> = {
+const LOCATIONS: Record<string, { lat: number; lng: number }> = {
   "zurich hb": { lat: 47.3769, lng: 8.5417 },
   "zurich station": { lat: 47.3769, lng: 8.5417 },
   "hauptbahnhof": { lat: 47.3769, lng: 8.5417 },
@@ -13,6 +13,20 @@ const ZURICH_LOCATIONS: Record<string, { lat: number; lng: number }> = {
   "altstetten": { lat: 47.3912, lng: 8.4887 },
   "wiedikon": { lat: 47.3717, lng: 8.5206 },
   "zurich": { lat: 47.3769, lng: 8.5417 },
+  "bern": { lat: 46.9480, lng: 7.4474 },
+  "bern bahnhof": { lat: 46.9480, lng: 7.4474 },
+  "wankdorf": { lat: 46.9631, lng: 7.4669 },
+  "bümpliz": { lat: 46.9414, lng: 7.3916 },
+  "lausanne": { lat: 46.5167, lng: 6.6294 },
+  "lausanne gare": { lat: 46.5167, lng: 6.6294 },
+  "flon": { lat: 46.5210, lng: 6.6275 },
+  "ouchy": { lat: 46.5080, lng: 6.6267 },
+  "geneva": { lat: 46.2100, lng: 6.1426 },
+  "genève": { lat: 46.2100, lng: 6.1426 },
+  "geneve": { lat: 46.2100, lng: 6.1426 },
+  "cornavin": { lat: 46.2100, lng: 6.1426 },
+  "eaux-vives": { lat: 46.1998, lng: 6.1574 },
+  "carouge": { lat: 46.1842, lng: 6.1390 },
 };
 
 Deno.serve(async (req) => {
@@ -42,7 +56,11 @@ Current date/time: ${now.toISOString()}
 
 Available service categories: haircut, plumbing, ac_cleaning, electrician, home_cleaning, beauty, appliance_repair
 
-Available locations in Zurich: Zurich HB (47.3769, 8.5417), Oerlikon (47.4111, 8.5441), Stadelhofen (47.3662, 8.5487), Altstetten (47.3912, 8.4887), Wiedikon (47.3717, 8.5206)
+Available locations:
+Zurich: Zurich HB (47.3769, 8.5417), Oerlikon (47.4111, 8.5441), Stadelhofen (47.3662, 8.5487), Altstetten (47.3912, 8.4887), Wiedikon (47.3717, 8.5206)
+Bern: Bern Bahnhof (46.9480, 7.4474), Wankdorf (46.9631, 7.4669), Bümpliz (46.9414, 7.3916)
+Lausanne: Lausanne Gare (46.5167, 6.6294), Flon (46.5210, 6.6275), Ouchy (46.5080, 6.6267)
+Geneva: Genève Cornavin (46.2100, 6.1426), Eaux-Vives (46.1998, 6.1574), Carouge (46.1842, 6.1390)
 
 If the user mentions a time like "at 4 PM" or "tomorrow morning", calculate the actual ISO timestamp.
 If no location is specified, default to Zurich HB.
