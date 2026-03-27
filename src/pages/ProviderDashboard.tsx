@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,6 +23,7 @@ type Notification = {
 
 export default function ProviderDashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<(ServiceRequest & { profiles: { display_name: string } | null })[]>([]);
   const [myBidRequestIds, setMyBidRequestIds] = useState<Set<string>>(new Set());
@@ -79,8 +81,8 @@ export default function ProviderDashboard() {
       className="max-w-2xl mx-auto space-y-6"
     >
       <div>
-        <h1 className="font-heading text-2xl font-bold">Available Requests</h1>
-        <p className="text-sm text-muted-foreground">Nearby service requests waiting for your bid</p>
+        <h1 className="font-heading text-2xl font-bold">{t("provider.availableRequests")}</h1>
+        <p className="text-sm text-muted-foreground">{t("provider.subtitle")}</p>
       </div>
 
       <AnimatePresence>
@@ -105,7 +107,7 @@ export default function ProviderDashboard() {
                     className="h-7 px-2 text-xs"
                     onClick={() => { dismissNotification(notif.id); navigate(`/request/${notif.request_id}`); }}
                   >
-                    View & Bid
+                    {t("provider.viewBid")}
                   </Button>
                   <button onClick={() => dismissNotification(notif.id)} className="text-muted-foreground hover:text-foreground transition-colors">
                     <X className="h-4 w-4" />
@@ -121,8 +123,8 @@ export default function ProviderDashboard() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-14 text-center">
             <Zap className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground font-medium">No requests nearby</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">New requests will appear here in real-time</p>
+            <p className="text-muted-foreground font-medium">{t("provider.noRequests")}</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">{t("provider.noRequestsSubtitle")}</p>
           </CardContent>
         </Card>
       )}
@@ -148,7 +150,7 @@ export default function ProviderDashboard() {
                       <h3 className="font-heading font-semibold truncate">{req.title}</h3>
                       {myBidRequestIds.has(req.id) && (
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary shrink-0">
-                          Bid sent
+                          {t("provider.bidSent")}
                         </span>
                       )}
                       <span className="inline-flex items-center rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-xs font-medium text-success shrink-0">
@@ -159,7 +161,7 @@ export default function ProviderDashboard() {
                     <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <User className="h-3.5 w-3.5" />
-                        {req.profiles?.display_name || "Customer"}
+                        {req.profiles?.display_name || t("auth.customer")}
                       </span>
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5" />

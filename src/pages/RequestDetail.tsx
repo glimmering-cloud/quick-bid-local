@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ type BidWithProfile = Bid & { profiles: Pick<Profile, "display_name" | "avatar_u
 export default function RequestDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [bids, setBids] = useState<BidWithProfile[]>([]);
@@ -45,8 +47,8 @@ export default function RequestDetail() {
         loadBids();
         if (payload.eventType === "INSERT" && isCustomer) {
           const newBid = payload.new as any;
-          toast("🔔 New bid!", {
-            description: `CHF ${Number(newBid.price).toFixed(0)}${newBid.estimated_wait_minutes ? ` · ${newBid.estimated_wait_minutes} min wait` : ""}`,
+          toast(`🔔 ${t("request.newBid")}`, {
+            description: `CHF ${Number(newBid.price).toFixed(0)}${newBid.estimated_wait_minutes ? ` · ${newBid.estimated_wait_minutes} min` : ""}`,
           });
         }
       })
@@ -66,11 +68,7 @@ export default function RequestDetail() {
 
   const loadBids = async () => {
     if (!id) return;
-    const { data } = await supabase
-      .from("bids")
-      .select("*")
-      .eq("request_id", id)
-      .order("created_at", { ascending: true });
+    const { data } = await supabase.from("bids").select("*").eq("request_id", id).order("created_at", { ascending: true });
 
     if (data && data.length > 0) {
       const providerIds = [...new Set(data.map(b => b.provider_id))];
@@ -112,7 +110,7 @@ export default function RequestDetail() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Bid submitted!");
+      toast.success(t("request.bidSubmitted"));
       setPrice(""); setMessage(""); setEstimatedWait("");
       await supabase.from("service_requests").update({ status: "bidding" as any }).eq("id", id);
     }
@@ -122,22 +120,11 @@ export default function RequestDetail() {
   const handleAcceptBid = async (bid: BidWithProfile) => {
     if (!user || !request) return;
 
-    const { error: acceptError } = await supabase
-      .from("bids")
-      .update({ status: "accepted" as any })
-      .eq("id", bid.id);
-
-    if (acceptError) {
-      toast.error(acceptError.message);
-      return;
-    }
+    const { error: acceptError } = await supabase.from("bids").update({ status: "accepted" as any }).eq("id", bid.id);
+    if (acceptError) { toast.error(acceptError.message); return; }
 
     const { error: bookingError } = await supabase.from("bookings").insert({
-      request_id: request.id,
-      bid_id: bid.id,
-      customer_id: user.id,
-      provider_id: bid.provider_id,
-      final_price_chf: Number(bid.price),
+      request_id: request.id, bid_id: bid.id, customer_id: user.id, provider_id: bid.provider_id, final_price_chf: Number(bid.price),
     });
 
     if (bookingError) {
@@ -156,7 +143,7 @@ export default function RequestDetail() {
       return;
     }
 
-    toast.success(`Booking confirmed with ${bid.profiles?.display_name}!`);
+    toast.success(`${t("request.bookingConfirmed")} ${bid.profiles?.display_name}!`);
     navigate(`/booking/${request.id}`);
   };
 
@@ -169,14 +156,10 @@ export default function RequestDetail() {
   const mapProviders = bids
     .filter(b => b.provider?.latitude)
     .map(b => ({
-      id: b.provider_id,
-      name: b.profiles?.display_name || "Provider",
-      lat: b.provider.latitude,
-      lng: b.provider.longitude,
-      category: request.category,
-      rating: Number(b.provider.rating || 4),
-      price: Number(b.price),
-      hasBid: true,
+      id: b.provider_id, name: b.profiles?.display_name || "Provider",
+      lat: b.provider.latitude, lng: b.provider.longitude,
+      category: request.category, rating: Number(b.provider.rating || 4),
+      price: Number(b.price), hasBid: true,
     }));
 
   const statusClasses =
@@ -186,15 +169,10 @@ export default function RequestDetail() {
     "border-border bg-muted text-muted-foreground";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="max-w-3xl mx-auto space-y-6"
-    >
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="max-w-3xl mx-auto space-y-6">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="h-4 w-4" />
-        Back
+        {t("request.back")}
       </button>
 
       <Card className="shadow-sm">
@@ -215,22 +193,16 @@ export default function RequestDetail() {
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4" />
-              {request.location_name}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              {format(new Date(request.requested_time), "EEEE, MMM d 'at' HH:mm")}
-            </span>
+            <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{request.location_name}</span>
+            <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{format(new Date(request.requested_time), "EEEE, MMM d 'at' HH:mm")}</span>
           </div>
 
           {isCustomer && bids.length > 0 && request.status !== "confirmed" && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{bids.length} bid{bids.length > 1 ? "s" : ""} received</span>
+                <span className="font-medium">{bids.length} {t("request.bidsReceived")}</span>
                 <span className="text-primary font-semibold">
-                  Best: CHF {Math.min(...bids.map(b => Number(b.price))).toFixed(0)}
+                  {t("request.best")}: CHF {Math.min(...bids.map(b => Number(b.price))).toFixed(0)}
                 </span>
               </div>
             </div>
@@ -239,17 +211,13 @@ export default function RequestDetail() {
       </Card>
 
       {mapProviders.length > 0 && (
-        <ServiceMap
-          center={{ lat: request.location_lat, lng: request.location_lng }}
-          providers={mapProviders}
-          className="shadow-sm"
-        />
+        <ServiceMap center={{ lat: request.location_lat, lng: request.location_lng }} providers={mapProviders} className="shadow-sm" />
       )}
 
       <div>
         <h2 className="font-heading text-lg font-semibold mb-3 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          Bids {bids.length > 0 && <span className="text-muted-foreground font-normal text-sm">({bids.length})</span>}
+          {t("request.bids")} {bids.length > 0 && <span className="text-muted-foreground font-normal text-sm">({bids.length})</span>}
         </h2>
 
         {bids.length === 0 && (
@@ -257,27 +225,16 @@ export default function RequestDetail() {
             <CardContent className="flex flex-col items-center py-10 text-center">
               <Banknote className="h-8 w-8 text-muted-foreground/30 mb-2" />
               <p className="text-sm text-muted-foreground">
-                {isCustomer ? "Waiting for providers to bid..." : "Be the first to bid!"}
+                {isCustomer ? t("request.waitingForBids") : t("request.beFirst")}
               </p>
-              {isCustomer && (
-                <p className="text-xs text-muted-foreground/60 mt-1">Bids appear here instantly with AI ranking</p>
-              )}
+              {isCustomer && <p className="text-xs text-muted-foreground/60 mt-1">{t("request.bidsAppear")}</p>}
             </CardContent>
           </Card>
         )}
 
         <div className="space-y-2">
           {rankedBids.map((ranked, i) => (
-            <BidRankingCard
-              key={ranked.bid.id}
-              rankedBid={ranked}
-              index={i}
-              isCustomer={isCustomer}
-              requestConfirmed={request.status === "confirmed"}
-              requestLat={request.location_lat}
-              requestLng={request.location_lng}
-              onAccept={() => handleAcceptBid(ranked.bid)}
-            />
+            <BidRankingCard key={ranked.bid.id} rankedBid={ranked} index={i} isCustomer={isCustomer} requestConfirmed={request.status === "confirmed"} requestLat={request.location_lat} requestLng={request.location_lng} onAccept={() => handleAcceptBid(ranked.bid)} />
           ))}
         </div>
       </div>
@@ -289,27 +246,27 @@ export default function RequestDetail() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Send className="h-5 w-5 text-primary" />
-                Submit Your Bid
+                {t("request.submitBid")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleBid} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Price (CHF)</Label>
+                    <Label>{t("request.priceCHF")}</Label>
                     <Input type="number" min="1" step="1" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 45" required />
                   </div>
                   <div className="space-y-2">
-                    <Label>Est. Wait (min)</Label>
+                    <Label>{t("request.estWait")}</Label>
                     <Input type="number" min="0" step="5" value={estimatedWait} onChange={(e) => setEstimatedWait(e.target.value)} placeholder="e.g. 15" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Message (optional)</Label>
-                  <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="e.g. 15 years experience, can come to you..." rows={2} />
+                  <Label>{t("request.messageOptional")}</Label>
+                  <Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t("request.messagePlaceholder")} rows={2} />
                 </div>
                 <Button type="submit" disabled={submitting} className="rounded-xl">
-                  {submitting ? "Submitting..." : "Submit Bid"}
+                  {submitting ? t("request.submitting") : t("request.submit")}
                 </Button>
               </form>
             </CardContent>
@@ -320,7 +277,7 @@ export default function RequestDetail() {
       {isProvider && alreadyBid && (
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="p-4 text-center">
-            <p className="text-sm font-medium text-primary">✓ You've already submitted a bid for this request</p>
+            <p className="text-sm font-medium text-primary">✓ {t("request.alreadyBid")}</p>
           </CardContent>
         </Card>
       )}
