@@ -132,3 +132,15 @@
 .animate-pulse-dot {
   animation: pulse-dot 1.5s ease-in-out infinite;
 }
+
+/* Ensure Leaflet map stays below navigation dropdowns */
+.leaflet-container {
+  z-index: 0 !important;
+}
+.leaflet-pane {
+  z-index: 1 !important;
+}
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 2 !important;
+}
