@@ -20,7 +20,7 @@ export function LanguageSwitcher() {
           <span className="sr-only">Language</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[160px]">
+      <DropdownMenuContent align="end" className="min-w-[160px] z-[1000]">
         {LANGUAGES.map((lang) => (
           <DropdownMenuItem
             key={lang.code}

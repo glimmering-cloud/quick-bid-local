@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, ChevronRight, Zap, User, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCategoryById } from "@/lib/categories";
+import { BookingHistory } from "@/components/BookingHistory";
 import type { ServiceRequest } from "@/lib/types";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -183,6 +184,8 @@ export default function ProviderDashboard() {
           );
         })}
       </div>
+
+      <BookingHistory role="provider" />
     </motion.div>
   );
 }

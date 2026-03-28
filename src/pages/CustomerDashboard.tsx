@@ -19,6 +19,7 @@ import {
 import { Plus, MapPin, Clock, ChevronRight, Banknote, Sparkles, Zap } from "lucide-react";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
 import { ServiceMap } from "@/components/ServiceMap";
+import { BookingHistory } from "@/components/BookingHistory";
 import { SERVICE_CATEGORIES, getCategoryById } from "@/lib/categories";
 import { LOCATIONS, CITIES, getLocationsByCity } from "@/lib/locations";
 import type { ServiceRequest } from "@/lib/types";
@@ -365,6 +366,8 @@ export default function CustomerDashboard() {
           );
         })}
       </div>
+
+      <BookingHistory role="customer" />
     </motion.div>
   );
 }

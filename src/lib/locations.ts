@@ -24,6 +24,34 @@ export const LOCATIONS: Location[] = [
   { name: "Genève Cornavin", lat: 46.2100, lng: 6.1426, city: "Geneva" },
   { name: "Genève Eaux-Vives", lat: 46.1998, lng: 6.1574, city: "Geneva" },
   { name: "Genève Carouge", lat: 46.1842, lng: 6.1390, city: "Geneva" },
+  // Basel
+  { name: "Basel SBB", lat: 47.5476, lng: 7.5896, city: "Basel" },
+  { name: "Basel Marktplatz", lat: 47.5579, lng: 7.5880, city: "Basel" },
+  { name: "Basel Badischer Bhf", lat: 47.5640, lng: 7.6075, city: "Basel" },
+  // Lucerne
+  { name: "Luzern Bahnhof", lat: 47.0502, lng: 8.3093, city: "Lucerne" },
+  { name: "Luzern Tribschen", lat: 47.0430, lng: 8.3150, city: "Lucerne" },
+  // St. Gallen
+  { name: "St. Gallen Bahnhof", lat: 47.4233, lng: 9.3700, city: "St. Gallen" },
+  { name: "St. Gallen Marktplatz", lat: 47.4245, lng: 9.3760, city: "St. Gallen" },
+  // Winterthur
+  { name: "Winterthur HB", lat: 47.5001, lng: 8.7237, city: "Winterthur" },
+  { name: "Winterthur Altstadt", lat: 47.4990, lng: 8.7290, city: "Winterthur" },
+  // Lugano
+  { name: "Lugano Stazione", lat: 46.0037, lng: 8.9511, city: "Lugano" },
+  { name: "Lugano Centro", lat: 46.0050, lng: 8.9530, city: "Lugano" },
+  // Biel/Bienne
+  { name: "Biel/Bienne Bahnhof", lat: 47.1325, lng: 7.2467, city: "Biel/Bienne" },
+  // Thun
+  { name: "Thun Bahnhof", lat: 46.7545, lng: 7.6295, city: "Thun" },
+  // Fribourg
+  { name: "Fribourg Gare", lat: 46.8032, lng: 7.1513, city: "Fribourg" },
+  // Chur
+  { name: "Chur Bahnhof", lat: 46.8530, lng: 9.5288, city: "Chur" },
+  // Neuchâtel
+  { name: "Neuchâtel Gare", lat: 46.9945, lng: 6.9380, city: "Neuchâtel" },
+  // Sion
+  { name: "Sion Gare", lat: 46.2333, lng: 7.3597, city: "Sion" },
 ];
 
 export const CITIES = [...new Set(LOCATIONS.map((l) => l.city))];

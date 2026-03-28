@@ -63,12 +63,10 @@ export function ServiceMap({ center, providers, heatmapPoints, onProviderClick, 
     };
   }, []);
 
-  // Update center
   useEffect(() => {
     leafletMap.current?.setView([center.lat, center.lng], 14);
   }, [center.lat, center.lng]);
 
-  // Update providers
   useEffect(() => {
     if (!markersRef.current) return;
     markersRef.current.clearLayers();
@@ -114,7 +112,6 @@ export function ServiceMap({ center, providers, heatmapPoints, onProviderClick, 
     });
   }, [providers, onProviderClick]);
 
-  // Demand heatmap (circle-based)
   useEffect(() => {
     if (!heatRef.current) return;
     heatRef.current.clearLayers();
@@ -132,8 +129,8 @@ export function ServiceMap({ center, providers, heatmapPoints, onProviderClick, 
   return (
     <div
       ref={mapRef}
-      className={`rounded-lg border overflow-hidden ${className || ""}`}
-      style={{ height: 400 }}
+      className={`rounded-lg border overflow-hidden relative ${className || ""}`}
+      style={{ height: 400, zIndex: 0 }}
     />
   );
 }
