@@ -396,6 +396,88 @@ export default function ManagementDashboard() {
           )}
         </TabsList>
 
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-4">
+          {analytics && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { label: "Total Requests", value: analytics.totalRequests, icon: "📋" },
+                  { label: "Total Bookings", value: analytics.totalBookings, icon: "✅" },
+                  { label: "Providers", value: analytics.totalProviders, icon: "👷" },
+                  { label: "Users", value: analytics.totalUsers, icon: "👥" },
+                ].map(s => (
+                  <Card key={s.label} className="shadow-sm">
+                    <CardContent className="p-4 text-center space-y-1">
+                      <span className="text-xl">{s.icon}</span>
+                      <p className="font-heading text-2xl font-bold text-primary">{s.value}</p>
+                      <p className="text-xs text-muted-foreground">{s.label}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="shadow-sm">
+                  <CardContent className="p-4 text-center space-y-1">
+                    <p className="text-xs text-muted-foreground">Total Revenue</p>
+                    <p className="font-heading text-xl font-bold text-primary">CHF {analytics.totalRevenue.toFixed(0)}</p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm">
+                  <CardContent className="p-4 text-center space-y-1">
+                    <p className="text-xs text-muted-foreground">Completed Bookings</p>
+                    <p className="font-heading text-xl font-bold text-success">{analytics.completedBookings}</p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm">
+                  <CardContent className="p-4 text-center space-y-1">
+                    <p className="text-xs text-muted-foreground">Avg Provider Rating</p>
+                    <p className="font-heading text-xl font-bold text-warning">⭐ {analytics.avgRating.toFixed(1)}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Requests by Category</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={analytics.categoryData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Provider Types</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={analytics.providerTypeData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                          {analytics.providerTypeData.map((_: any, i: number) => (
+                            <Cell key={i} fill={["hsl(var(--primary))", "hsl(var(--warning))", "hsl(var(--muted-foreground))"][i % 3]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+        </TabsContent>
+
         {/* Complaints Tab */}
         <TabsContent value="complaints" className="space-y-4">
           <div className="flex items-center gap-2">
