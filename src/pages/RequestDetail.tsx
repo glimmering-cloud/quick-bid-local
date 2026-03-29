@@ -73,7 +73,7 @@ export default function RequestDetail() {
     if (data && data.length > 0) {
       const providerIds = [...new Set(data.map(b => b.provider_id))];
       const [{ data: profiles }, { data: providerRecords }] = await Promise.all([
-        supabase.from("profiles").select("user_id, display_name, avatar_url").in("user_id", providerIds),
+        supabase.from("public_profiles").select("user_id, display_name, avatar_url").in("user_id", providerIds),
         supabase.from("providers").select("user_id, business_name, rating, latitude, longitude").in("user_id", providerIds),
       ]);
 

@@ -65,7 +65,7 @@ export default function ProviderDashboard() {
     const rawReqs = reqs || [];
     if (rawReqs.length > 0) {
       const customerIds = [...new Set(rawReqs.map(r => r.customer_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, display_name").in("user_id", customerIds);
+      const { data: profiles } = await supabase.from("public_profiles").select("user_id, display_name").in("user_id", customerIds);
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
       setRequests(rawReqs.map(r => ({ ...r, profiles: profileMap.get(r.customer_id) || null })));
     } else {

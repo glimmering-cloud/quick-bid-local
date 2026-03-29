@@ -42,7 +42,7 @@ export function BookingHistory({ role }: BookingHistoryProps) {
 
       const [{ data: requests }, { data: profiles }, { data: reviews }] = await Promise.all([
         supabase.from("service_requests").select("id, title, category, location_name, requested_time").in("id", requestIds),
-        supabase.from("profiles").select("user_id, display_name").in("user_id", otherUserIds),
+        supabase.from("public_profiles").select("user_id, display_name").in("user_id", otherUserIds),
         supabase.from("reviews").select("booking_id, rating, reviewer_id").eq("reviewer_id", user.id),
       ]);
 
