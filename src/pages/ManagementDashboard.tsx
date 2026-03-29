@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,8 @@ import {
   Star,
   Users,
   MessageSquare,
+  BarChart3,
+  TrendingUp,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -69,6 +72,7 @@ export default function ManagementDashboard() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [staffMembers, setStaffMembers] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [analytics, setAnalytics] = useState<any>(null);
 
   // Invite form state
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -167,6 +171,54 @@ export default function ManagementDashboard() {
     }
   }, [isAdmin]);
 
+  const loadAnalytics = useCallback(async () => {
+    const [{ count: totalRequests }, { count: totalBookings }, { count: totalProviders }, { count: totalUsers }, { data: recentRequests }, { data: bookingsData }, { data: providersData }] = await Promise.all([
+      supabase.from("service_requests").select("*", { count: "exact", head: true }),
+      supabase.from("bookings").select("*", { count: "exact", head: true }),
+      supabase.from("providers").select("*", { count: "exact", head: true }),
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
+      supabase.from("service_requests").select("category, status").limit(1000),
+      supabase.from("bookings").select("status, final_price_chf").limit(1000),
+      supabase.from("providers").select("service_category, provider_type, rating").limit(1000),
+    ]);
+
+    // Category distribution
+    const catCounts: Record<string, number> = {};
+    (recentRequests || []).forEach(r => { catCounts[r.category] = (catCounts[r.category] || 0) + 1; });
+    const categoryData = Object.entries(catCounts).map(([name, value]) => ({ name, value }));
+
+    // Request status distribution
+    const statusCounts: Record<string, number> = {};
+    (recentRequests || []).forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
+    const statusData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+
+    // Provider type distribution
+    const typeCounts: Record<string, number> = {};
+    (providersData || []).forEach(p => { typeCounts[p.provider_type || "company"] = (typeCounts[p.provider_type || "company"] || 0) + 1; });
+    const providerTypeData = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
+
+    // Revenue
+    const totalRevenue = (bookingsData || []).reduce((sum, b) => sum + (Number(b.final_price_chf) || 0), 0);
+    const completedBookings = (bookingsData || []).filter(b => b.status === "completed").length;
+
+    // Avg rating
+    const ratings = (providersData || []).map(p => Number(p.rating || 0)).filter(r => r > 0);
+    const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+
+    setAnalytics({
+      totalRequests: totalRequests || 0,
+      totalBookings: totalBookings || 0,
+      totalProviders: totalProviders || 0,
+      totalUsers: totalUsers || 0,
+      categoryData,
+      statusData,
+      providerTypeData,
+      totalRevenue,
+      completedBookings,
+      avgRating,
+    });
+  }, []);
+
   useEffect(() => {
     if (rolesLoading) return;
     if (!isStaff) {
@@ -176,11 +228,11 @@ export default function ManagementDashboard() {
 
     const load = async () => {
       setLoadingData(true);
-      await Promise.all([loadComplaints(), loadReviews(), loadStaff()]);
+      await Promise.all([loadComplaints(), loadReviews(), loadStaff(), loadAnalytics()]);
       setLoadingData(false);
     };
     load();
-  }, [rolesLoading, isStaff, navigate, loadComplaints, loadReviews, loadStaff]);
+  }, [rolesLoading, isStaff, navigate, loadComplaints, loadReviews, loadStaff, loadAnalytics]);
 
   const handleUpdateComplaint = async (id: string, status: ComplaintStatus, resolutionNote?: string) => {
     const updates: any = { status };
