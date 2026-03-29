@@ -34,8 +34,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={user ? <Navigate to={profile?.role === "provider" ? "/provider" : "/dashboard"} replace /> : <Auth />} />
-        <Route path="/dashboard" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
-        <Route path="/provider" element={<ProtectedRoute><ProviderDashboard /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute>{profile?.role === "provider" ? <Navigate to="/provider" replace /> : <CustomerDashboard />}</ProtectedRoute>} />
+        <Route path="/provider" element={<ProtectedRoute>{profile?.role === "customer" ? <Navigate to="/dashboard" replace /> : <ProviderDashboard />}</ProtectedRoute>} />
         <Route path="/request/:id" element={<ProtectedRoute><RequestDetail /></ProtectedRoute>} />
         <Route path="/booking/:requestId" element={<ProtectedRoute><BookingConfirmation /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Zap, MapPin, Clock, ArrowRight, Sparkles, Shield,
-  Star, CheckCircle2, TrendingUp, ChevronDown
+  Star, CheckCircle2, TrendingUp, ChevronDown, Trophy
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { SERVICE_CATEGORIES } from "@/lib/categories";
