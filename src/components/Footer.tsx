@@ -44,8 +44,8 @@ export function Footer() {
             <h4 className="font-heading text-sm font-semibold">{t("footer.support")}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/settings" className="hover:text-foreground transition-colors">{t("footer.accountSettings")}</Link></li>
-              <li><span className="cursor-default">{t("footer.privacy")}</span></li>
-              <li><span className="cursor-default">{t("footer.terms")}</span></li>
+              <li><Link to="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacy")}</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground transition-colors">{t("footer.terms")}</Link></li>
             </ul>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function Footer() {
             © {new Date().getFullYear()} QuickServe. {t("footer.rights")}
           </p>
           <p className="text-xs text-muted-foreground">
-            {t("footer.builtFor")}
+            GenAI Zurich Hackathon 2026 · Project QuickServe
           </p>
         </div>
       </div>

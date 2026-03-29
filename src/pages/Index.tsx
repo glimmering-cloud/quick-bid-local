@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Zap, MapPin, Clock, ArrowRight, Sparkles, Shield,
-  Star, CheckCircle2, TrendingUp, ChevronDown
+  Star, CheckCircle2, TrendingUp, ChevronDown, Trophy
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { SERVICE_CATEGORIES } from "@/lib/categories";
@@ -27,7 +27,7 @@ export default function Index() {
     { value: "500+", label: t("stats.providers"), icon: "👷" },
     { value: "< 30s", label: t("stats.responseTime"), icon: "⚡" },
     { value: "4.8★", label: t("stats.rating"), icon: "⭐" },
-    { value: t("stats.coverageValue"), label: t("stats.coverage"), icon: "🇨🇭" },
+    { value: "15+", label: t("stats.coverage"), icon: "🇨🇭" },
   ];
 
   return (
@@ -256,6 +256,27 @@ export default function Index() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </motion.section>
+
+      {/* Hackathon Banner */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-50px" }}
+        variants={stagger}
+        className="w-full py-8 bg-card border-y"
+      >
+        <div className="container max-w-2xl text-center">
+          <motion.div variants={fadeUp} transition={{ duration: 0.4 }} className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-warning" />
+              <span className="text-sm font-medium text-muted-foreground">GenAI Zurich Hackathon 2026</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              This prototype was built as part of <strong className="text-foreground">Project QuickServe</strong> — an AI-powered local services marketplace for Switzerland.
+            </p>
+          </motion.div>
         </div>
       </motion.section>
 

@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,8 @@ import {
   Star,
   Users,
   MessageSquare,
+  BarChart3,
+  TrendingUp,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -69,6 +72,7 @@ export default function ManagementDashboard() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [staffMembers, setStaffMembers] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [analytics, setAnalytics] = useState<any>(null);
 
   // Invite form state
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -167,6 +171,54 @@ export default function ManagementDashboard() {
     }
   }, [isAdmin]);
 
+  const loadAnalytics = useCallback(async () => {
+    const [{ count: totalRequests }, { count: totalBookings }, { count: totalProviders }, { count: totalUsers }, { data: recentRequests }, { data: bookingsData }, { data: providersData }] = await Promise.all([
+      supabase.from("service_requests").select("*", { count: "exact", head: true }),
+      supabase.from("bookings").select("*", { count: "exact", head: true }),
+      supabase.from("providers").select("*", { count: "exact", head: true }),
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
+      supabase.from("service_requests").select("category, status").limit(1000),
+      supabase.from("bookings").select("status, final_price_chf").limit(1000),
+      supabase.from("providers").select("service_category, provider_type, rating").limit(1000),
+    ]);
+
+    // Category distribution
+    const catCounts: Record<string, number> = {};
+    (recentRequests || []).forEach(r => { catCounts[r.category] = (catCounts[r.category] || 0) + 1; });
+    const categoryData = Object.entries(catCounts).map(([name, value]) => ({ name, value }));
+
+    // Request status distribution
+    const statusCounts: Record<string, number> = {};
+    (recentRequests || []).forEach(r => { statusCounts[r.status] = (statusCounts[r.status] || 0) + 1; });
+    const statusData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+
+    // Provider type distribution
+    const typeCounts: Record<string, number> = {};
+    (providersData || []).forEach(p => { typeCounts[p.provider_type || "company"] = (typeCounts[p.provider_type || "company"] || 0) + 1; });
+    const providerTypeData = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
+
+    // Revenue
+    const totalRevenue = (bookingsData || []).reduce((sum, b) => sum + (Number(b.final_price_chf) || 0), 0);
+    const completedBookings = (bookingsData || []).filter(b => b.status === "completed").length;
+
+    // Avg rating
+    const ratings = (providersData || []).map(p => Number(p.rating || 0)).filter(r => r > 0);
+    const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+
+    setAnalytics({
+      totalRequests: totalRequests || 0,
+      totalBookings: totalBookings || 0,
+      totalProviders: totalProviders || 0,
+      totalUsers: totalUsers || 0,
+      categoryData,
+      statusData,
+      providerTypeData,
+      totalRevenue,
+      completedBookings,
+      avgRating,
+    });
+  }, []);
+
   useEffect(() => {
     if (rolesLoading) return;
     if (!isStaff) {
@@ -176,11 +228,11 @@ export default function ManagementDashboard() {
 
     const load = async () => {
       setLoadingData(true);
-      await Promise.all([loadComplaints(), loadReviews(), loadStaff()]);
+      await Promise.all([loadComplaints(), loadReviews(), loadStaff(), loadAnalytics()]);
       setLoadingData(false);
     };
     load();
-  }, [rolesLoading, isStaff, navigate, loadComplaints, loadReviews, loadStaff]);
+  }, [rolesLoading, isStaff, navigate, loadComplaints, loadReviews, loadStaff, loadAnalytics]);
 
   const handleUpdateComplaint = async (id: string, status: ComplaintStatus, resolutionNote?: string) => {
     const updates: any = { status };
@@ -317,8 +369,12 @@ export default function ManagementDashboard() {
         )}
       </div>
 
-      <Tabs defaultValue="complaints" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="analytics" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
           <TabsTrigger value="complaints" className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
             Complaints
@@ -339,6 +395,88 @@ export default function ManagementDashboard() {
             </TabsTrigger>
           )}
         </TabsList>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-4">
+          {analytics && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { label: "Total Requests", value: analytics.totalRequests, icon: "📋" },
+                  { label: "Total Bookings", value: analytics.totalBookings, icon: "✅" },
+                  { label: "Providers", value: analytics.totalProviders, icon: "👷" },
+                  { label: "Users", value: analytics.totalUsers, icon: "👥" },
+                ].map(s => (
+                  <Card key={s.label} className="shadow-sm">
+                    <CardContent className="p-4 text-center space-y-1">
+                      <span className="text-xl">{s.icon}</span>
+                      <p className="font-heading text-2xl font-bold text-primary">{s.value}</p>
+                      <p className="text-xs text-muted-foreground">{s.label}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="shadow-sm">
+                  <CardContent className="p-4 text-center space-y-1">
+                    <p className="text-xs text-muted-foreground">Total Revenue</p>
+                    <p className="font-heading text-xl font-bold text-primary">CHF {analytics.totalRevenue.toFixed(0)}</p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm">
+                  <CardContent className="p-4 text-center space-y-1">
+                    <p className="text-xs text-muted-foreground">Completed Bookings</p>
+                    <p className="font-heading text-xl font-bold text-success">{analytics.completedBookings}</p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm">
+                  <CardContent className="p-4 text-center space-y-1">
+                    <p className="text-xs text-muted-foreground">Avg Provider Rating</p>
+                    <p className="font-heading text-xl font-bold text-warning">⭐ {analytics.avgRating.toFixed(1)}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Requests by Category</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={analytics.categoryData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Provider Types</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={analytics.providerTypeData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                          {analytics.providerTypeData.map((_: any, i: number) => (
+                            <Cell key={i} fill={["hsl(var(--primary))", "hsl(var(--warning))", "hsl(var(--muted-foreground))"][i % 3]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+        </TabsContent>
 
         {/* Complaints Tab */}
         <TabsContent value="complaints" className="space-y-4">
