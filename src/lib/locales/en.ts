@@ -19,7 +19,7 @@ export default {
     responseTime: "Avg Response Time",
     rating: "Customer Rating",
     coverage: "City Coverage",
-    coverageValue: "4 Cities",
+    coverageValue: "15+ Cities",
   },
   howItWorks: {
     badge: "Simple process",
