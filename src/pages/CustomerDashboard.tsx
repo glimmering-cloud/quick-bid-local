@@ -81,7 +81,7 @@ export default function CustomerDashboard() {
   }, [user, loadBidCounts]);
 
   const loadProviders = useCallback(async () => {
-    const { data } = await supabase.from("providers").select("*");
+    const { data } = await supabase.from("providers").select("*").neq("provider_type", "individual");
     setProviders((data || []).map(p => ({
       id: p.id, name: p.business_name, lat: p.latitude || 47.377, lng: p.longitude || 8.542,
       category: p.service_category, rating: Number(p.rating || 4), distance_km: 0.5 + Math.random() * 1.5,
