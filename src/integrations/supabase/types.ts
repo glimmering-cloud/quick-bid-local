@@ -245,6 +245,7 @@ export type Database = {
           id: string
           latitude: number | null
           longitude: number | null
+          provider_type: string
           rating: number | null
           service_category: string
           updated_at: string
@@ -257,6 +258,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          provider_type?: string
           rating?: number | null
           service_category?: string
           updated_at?: string
@@ -269,6 +271,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          provider_type?: string
           rating?: number | null
           service_category?: string
           updated_at?: string
