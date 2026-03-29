@@ -371,6 +371,10 @@ export default function ManagementDashboard() {
 
       <Tabs defaultValue="analytics" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
           <TabsTrigger value="complaints" className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
             Complaints
