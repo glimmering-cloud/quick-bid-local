@@ -369,8 +369,8 @@ export default function ManagementDashboard() {
         )}
       </div>
 
-      <Tabs defaultValue="complaints" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="analytics" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="complaints" className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
             Complaints
