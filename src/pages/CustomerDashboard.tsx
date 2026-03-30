@@ -85,6 +85,7 @@ export default function CustomerDashboard() {
     setProviders((data || []).map(p => ({
       id: p.id, name: p.business_name, lat: p.latitude || 47.377, lng: p.longitude || 8.542,
       category: p.service_category, rating: Number(p.rating || 4), distance_km: 0.5 + Math.random() * 1.5,
+      price: Number(p.base_price_chf || 0),
     })));
   }, []);
 
