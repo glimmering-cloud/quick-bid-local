@@ -77,8 +77,20 @@ export function ServiceMap({ center, providers, heatmapPoints, onProviderClick, 
   }, []);
 
   useEffect(() => {
-    leafletMap.current?.setView([center.lat, center.lng], 14);
-  }, [center.lat, center.lng]);
+    if (!leafletMap.current) return;
+    leafletMap.current.setView([center.lat, center.lng], leafletMap.current.getZoom());
+    // Fit bounds to include all providers plus center
+    setTimeout(() => {
+      if (!leafletMap.current || !markersRef.current) return;
+      const bounds = L.latLngBounds([[center.lat, center.lng]]);
+      providers.forEach(p => bounds.extend([p.lat, p.lng]));
+      if (providers.length > 0) {
+        leafletMap.current.fitBounds(bounds.pad(0.15), { maxZoom: 15 });
+      } else {
+        leafletMap.current.setView([center.lat, center.lng], 14);
+      }
+    }, 100);
+  }, [center.lat, center.lng, providers.length]);
 
   useEffect(() => {
     if (!markersRef.current) return;
