@@ -5,7 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper, Star, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper, Star,
+  Loader2, Phone, ShieldCheck, Eye, EyeOff, Lock, Navigation
+} from "lucide-react";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -22,6 +27,11 @@ export default function BookingConfirmation() {
   const [loading, setLoading] = useState(true);
   const [existingReview, setExistingReview] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [startingJob, setStartingJob] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
+  const [counterparty, setCounterparty] = useState<{ display_name: string; avatar_url: string | null; masked_phone: string | null } | null>(null);
+  const [locationInfo, setLocationInfo] = useState<{ location_name: string; location_lat: number; location_lng: number; is_precise: boolean } | null>(null);
 
   useEffect(() => {
     if (!requestId || !user) return;
@@ -39,20 +49,66 @@ export default function BookingConfirmation() {
     const { data: bookingData } = await supabase.from("bookings").select("*").eq("request_id", requestId!).single();
     if (!bookingData) { setLoading(false); return; }
 
-    const [{ data: request }, { data: bid }, { data: providerProfile }, { data: customerProfile }] = await Promise.all([
+    const [{ data: request }, { data: bid }] = await Promise.all([
       supabase.from("service_requests").select("*").eq("id", bookingData.request_id).single(),
       supabase.from("bids").select("price, message").eq("id", bookingData.bid_id).single(),
-      supabase.from("profiles").select("display_name, phone").eq("user_id", bookingData.provider_id).single(),
-      supabase.from("profiles").select("display_name, phone").eq("user_id", bookingData.customer_id).single(),
     ]);
 
-    setBooking({ ...bookingData, service_requests: request, bids: bid, provider: providerProfile, customer: customerProfile });
+    setBooking({ ...bookingData, service_requests: request, bids: bid });
+
+    // Load counterparty via secure function (masked phone)
+    const { data: counterpartyData } = await supabase.rpc("get_booking_counterparty", { p_booking_id: bookingData.id });
+    if (counterpartyData && counterpartyData.length > 0) {
+      setCounterparty(counterpartyData[0]);
+    }
+
+    // Load location via secure function (approximate vs precise)
+    const { data: locData } = await supabase.rpc("get_booking_location", { p_booking_id: bookingData.id });
+    if (locData && locData.length > 0) {
+      setLocationInfo(locData[0]);
+    }
 
     if (user) {
       const { data: review } = await supabase.from("reviews").select("id").eq("booking_id", bookingData.id).eq("reviewer_id", user.id).maybeSingle();
       setExistingReview(!!review);
     }
     setLoading(false);
+  };
+
+  const handleStartJob = async () => {
+    if (!booking) return;
+
+    // Provider must enter the PIN that customer shares verbally
+    if (!pinInput || pinInput.length !== 4) {
+      setPinError(true);
+      toast.error("Please enter the 4-digit verification PIN from the customer");
+      return;
+    }
+
+    setStartingJob(true);
+    setPinError(false);
+
+    // Verify PIN matches
+    if (pinInput !== booking.verification_pin) {
+      setPinError(true);
+      toast.error("Incorrect PIN. Ask the customer for the correct PIN.");
+      setStartingJob(false);
+      return;
+    }
+
+    const { error } = await supabase.from("bookings").update({
+      job_started: true,
+      job_started_at: new Date().toISOString(),
+      address_revealed: true,
+    } as any).eq("id", booking.id);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Job started! Precise location is now visible.");
+      loadBooking();
+    }
+    setStartingJob(false);
   };
 
   const handleMarkComplete = async () => {
@@ -62,7 +118,6 @@ export default function BookingConfirmation() {
     if (error) {
       toast.error(error.message);
     } else {
-      // Also update the service request status
       await supabase.from("service_requests").update({ status: "completed" as any }).eq("id", booking.request_id);
       toast.success(t("booking.markedComplete"));
     }
@@ -95,6 +150,7 @@ export default function BookingConfirmation() {
   const isCustomer = booking.customer_id === user?.id;
   const isProvider = booking.provider_id === user?.id;
   const cat = getCategoryById(request?.category);
+  const jobStarted = booking.job_started;
 
   const statusIcon = booking.status === "completed"
     ? { icon: CheckCircle2, color: "text-success", bg: "bg-success/10", label: t("booking.completed") }
@@ -124,6 +180,7 @@ export default function BookingConfirmation() {
         )}
       </motion.div>
 
+      {/* Booking Details Card */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }}>
         <Card className="shadow-md">
           <CardContent className="p-6 space-y-4">
@@ -131,9 +188,35 @@ export default function BookingConfirmation() {
               {[
                 { label: t("booking.service"), value: <span className="font-medium flex items-center gap-1.5"><span>{cat.emoji}</span>{request.title}</span> },
                 { label: t("booking.price"), value: <span className="font-heading text-xl font-bold text-primary">CHF {Number(booking.bids?.price || booking.final_price_chf || 0).toFixed(0)}</span> },
-                { label: <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{t("booking.locationLabel")}</span>, value: <span className="font-medium">{request.location_name}</span> },
+                { label: <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{t("booking.locationLabel")}</span>, value: (
+                  <span className="font-medium flex items-center gap-1.5">
+                    {locationInfo ? (
+                      <>
+                        {locationInfo.location_name}
+                        {!locationInfo.is_precise && (
+                          <span className="inline-flex items-center gap-1 text-xs text-warning bg-warning/10 px-2 py-0.5 rounded-full">
+                            <EyeOff className="h-3 w-3" />
+                            Approximate
+                          </span>
+                        )}
+                        {locationInfo.is_precise && isProvider && (
+                          <span className="inline-flex items-center gap-1 text-xs text-success bg-success/10 px-2 py-0.5 rounded-full">
+                            <Eye className="h-3 w-3" />
+                            Precise
+                          </span>
+                        )}
+                      </>
+                    ) : request.location_name}
+                  </span>
+                )},
                 { label: <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{t("booking.whenLabel")}</span>, value: <span className="font-medium">{format(new Date(request.requested_time), "EEE, MMM d 'at' HH:mm")}</span> },
-                { label: <span className="flex items-center gap-1.5"><User className="h-4 w-4" />{isCustomer ? t("booking.providerLabel") : t("booking.customerLabel")}</span>, value: <span className="font-medium">{isCustomer ? booking.provider?.display_name : booking.customer?.display_name}</span> },
+                { label: <span className="flex items-center gap-1.5"><User className="h-4 w-4" />{isCustomer ? t("booking.providerLabel") : t("booking.customerLabel")}</span>, value: <span className="font-medium">{counterparty?.display_name || "—"}</span> },
+                { label: <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" />Contact</span>, value: (
+                  <span className="font-medium flex items-center gap-1.5">
+                    {counterparty?.masked_phone || "Not provided"}
+                    <Lock className="h-3 w-3 text-muted-foreground" />
+                  </span>
+                )},
                 { label: t("booking.statusLabel"), value: (
                   <span className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${
                     booking.status === "completed" ? "bg-success/10 text-success border-success/20" :
@@ -157,10 +240,66 @@ export default function BookingConfirmation() {
         </Card>
       </motion.div>
 
-      {/* Provider: Mark as complete */}
-      {isProvider && booking.status === "confirmed" && (
+      {/* Customer: Show verification PIN */}
+      {isCustomer && booking.status === "confirmed" && booking.verification_pin && (
+        <Card className="border-primary/20 bg-primary/5 shadow-sm">
+          <CardContent className="p-4 text-center space-y-2">
+            <div className="flex items-center justify-center gap-2 text-sm font-medium">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              Your Verification PIN
+            </div>
+            <div className="font-heading text-3xl font-bold tracking-[0.3em] text-primary">
+              {booking.verification_pin}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Share this PIN with the provider when they arrive to verify their identity and reveal precise location.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Provider: Start Job with PIN verification */}
+      {isProvider && booking.status === "confirmed" && !jobStarted && (
+        <Card className="border-warning/20 shadow-sm">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Navigation className="h-4 w-4 text-warning" />
+              Start Job — PIN Verification Required
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Enter the 4-digit PIN from the customer to verify your identity and reveal the precise service location.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={pinInput}
+                onChange={(e) => { setPinInput(e.target.value.replace(/\D/g, "")); setPinError(false); }}
+                placeholder="0000"
+                className={`w-28 text-center font-mono text-lg tracking-[0.2em] ${pinError ? "border-destructive" : ""}`}
+              />
+              <Button onClick={handleStartJob} disabled={startingJob} className="rounded-xl">
+                {startingJob ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying</>
+                ) : (
+                  <><ShieldCheck className="mr-2 h-4 w-4" />Start Job</>
+                )}
+              </Button>
+            </div>
+            {pinError && <p className="text-xs text-destructive">Incorrect or missing PIN</p>}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Provider: Job started, can mark complete */}
+      {isProvider && booking.status === "confirmed" && jobStarted && (
         <Card className="border-primary/20 shadow-sm">
           <CardContent className="p-4 text-center space-y-3">
+            <div className="flex items-center justify-center gap-2 text-sm font-medium text-success">
+              <CheckCircle2 className="h-4 w-4" />
+              Job Started — Precise location revealed
+            </div>
             <p className="text-sm text-muted-foreground">{t("booking.markCompleteDesc")}</p>
             <Button onClick={handleMarkComplete} disabled={completing} className="rounded-xl w-full">
               {completing ? (
@@ -177,10 +316,14 @@ export default function BookingConfirmation() {
       {isCustomer && booking.status === "confirmed" && (
         <Card className="border-warning/20 shadow-sm">
           <CardContent className="p-4 text-center space-y-3">
-            <p className="text-sm text-muted-foreground">{t("booking.awaitingCompletion")}</p>
-            <Button variant="outline" size="sm" onClick={handleCancelBooking} className="text-destructive border-destructive/30 hover:bg-destructive/5">
-              {t("booking.cancelBooking")}
-            </Button>
+            <p className="text-sm text-muted-foreground">
+              {jobStarted ? "Provider has verified and started the job." : t("booking.awaitingCompletion")}
+            </p>
+            {!jobStarted && (
+              <Button variant="outline" size="sm" onClick={handleCancelBooking} className="text-destructive border-destructive/30 hover:bg-destructive/5">
+                {t("booking.cancelBooking")}
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -189,7 +332,7 @@ export default function BookingConfirmation() {
       {booking.status === "completed" && (
         <div className="flex items-center justify-center gap-3">
           {!existingReview && (
-            <ReviewForm bookingId={booking.id} revieweeId={isCustomer ? booking.provider_id : booking.customer_id} revieweeName={isCustomer ? booking.provider?.display_name : booking.customer?.display_name} onSubmitted={() => setExistingReview(true)} />
+            <ReviewForm bookingId={booking.id} revieweeId={isCustomer ? booking.provider_id : booking.customer_id} revieweeName={counterparty?.display_name || "User"} onSubmitted={() => setExistingReview(true)} />
           )}
           {existingReview && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

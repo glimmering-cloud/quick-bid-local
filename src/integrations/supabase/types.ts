@@ -60,37 +60,49 @@ export type Database = {
       }
       bookings: {
         Row: {
+          address_revealed: boolean
           bid_id: string
           created_at: string
           customer_id: string
           final_price_chf: number | null
           id: string
+          job_started: boolean
+          job_started_at: string | null
           provider_id: string
           request_id: string
           status: Database["public"]["Enums"]["booking_status"]
           updated_at: string
+          verification_pin: string | null
         }
         Insert: {
+          address_revealed?: boolean
           bid_id: string
           created_at?: string
           customer_id: string
           final_price_chf?: number | null
           id?: string
+          job_started?: boolean
+          job_started_at?: string | null
           provider_id: string
           request_id: string
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
+          verification_pin?: string | null
         }
         Update: {
+          address_revealed?: boolean
           bid_id?: string
           created_at?: string
           customer_id?: string
           final_price_chf?: number | null
           id?: string
+          job_started?: boolean
+          job_started_at?: string | null
           provider_id?: string
           request_id?: string
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
+          verification_pin?: string | null
         }
         Relationships: [
           {
@@ -428,6 +440,23 @@ export type Database = {
           business_name: string
           distance_km: number
           provider_user_id: string
+        }[]
+      }
+      get_booking_counterparty: {
+        Args: { p_booking_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          masked_phone: string
+        }[]
+      }
+      get_booking_location: {
+        Args: { p_booking_id: string }
+        Returns: {
+          is_precise: boolean
+          location_lat: number
+          location_lng: number
+          location_name: string
         }[]
       }
       has_role: {
