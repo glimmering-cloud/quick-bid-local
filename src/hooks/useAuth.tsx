@@ -68,22 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
 
-    // Wait for profile to be auto-created, then update role
-    const { data: { user: newUser } } = await supabase.auth.getUser();
-    if (newUser) {
-      // Retry profile update with a small delay to allow trigger to create it
-      const updateProfile = async (retries = 3) => {
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ role, display_name: displayName })
-          .eq("user_id", newUser.id);
-        if (updateError && retries > 0) {
-          await new Promise(r => setTimeout(r, 500));
-          return updateProfile(retries - 1);
-        }
-      };
-      await updateProfile();
-    }
+    // Profile is now auto-created by the trigger with the correct role from metadata
   };
 
   const signIn = async (email: string, password: string) => {

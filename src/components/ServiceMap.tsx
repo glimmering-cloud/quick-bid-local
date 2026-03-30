@@ -38,10 +38,23 @@ export function ServiceMap({ center, providers, heatmapPoints, onProviderClick, 
       zoomControl: true,
     });
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const streets = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
       maxZoom: 18,
-    }).addTo(leafletMap.current);
+    });
+
+    const satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      attribution: '&copy; Esri',
+      maxZoom: 18,
+    });
+
+    streets.addTo(leafletMap.current);
+
+    L.control.layers(
+      { "Street": streets, "Satellite": satellite },
+      {},
+      { position: "topright" }
+    ).addTo(leafletMap.current);
 
     markersRef.current = L.layerGroup().addTo(leafletMap.current);
     heatRef.current = L.layerGroup().addTo(leafletMap.current);
