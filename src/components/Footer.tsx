@@ -54,8 +54,13 @@ export function Footer() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} QuickServe. {t("footer.rights")}
           </p>
-          <p className="text-xs text-muted-foreground">
-            GenAI Zurich Hackathon 2026 · Project QuickServe
+          <p className="text-xs text-muted-foreground flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 shrink-0">
+              <rect width="32" height="32" rx="2" fill="#DA291C"/>
+              <rect x="13" y="6" width="6" height="20" fill="white"/>
+              <rect x="6" y="13" width="20" height="6" fill="white"/>
+            </svg>
+            Made for Switzerland 🇨🇭 · GenAI Zurich Hackathon 2026 · Project QuickServe
           </p>
         </div>
       </div>
