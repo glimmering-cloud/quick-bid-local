@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Clock, ArrowLeft, Send, Check, Banknote, Timer, Star, TrendingUp } from "lucide-react";
 import { ServiceMap } from "@/components/ServiceMap";
 import { BidRankingCard } from "@/components/BidRankingCard";
+import { LiveBiddingIndicator } from "@/components/LiveBiddingIndicator";
 import { PriceSuggestion } from "@/components/PriceSuggestion";
 import { rankBids } from "@/lib/ranking";
 import { getCategoryById } from "@/lib/categories";
