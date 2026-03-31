@@ -144,7 +144,8 @@ export default function RequestDetail() {
       return;
     }
 
-    toast.success(`${t("request.bookingConfirmed")} ${bid.profiles?.display_name}!`);
+    const providerName = bid.provider?.business_name || bid.profiles?.display_name || t("auth.provider");
+    toast.success(`${t("request.bookingConfirmed")} ${providerName}!`);
     navigate(`/booking/${request.id}`);
   };
 
