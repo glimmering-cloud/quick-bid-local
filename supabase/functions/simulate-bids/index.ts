@@ -89,18 +89,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Find real providers matching category and preferred type
-    let query = supabase
+    // Find real providers matching category
+    const { data: realProviders } = await supabase
       .from("providers")
-      .select("user_id, business_name, base_price_chf, rating, latitude, longitude, provider_type")
+      .select("user_id, business_name, base_price_chf, rating, latitude, longitude")
       .eq("service_category", serviceRequest.category);
-
-    const prefType = serviceRequest.preferred_provider_type;
-    if (prefType && prefType !== "any") {
-      query = query.eq("provider_type", prefType);
-    }
-
-    const { data: realProviders } = await query;
 
     const providers = realProviders || [];
     const numBids = Math.min(Math.max(3, providers.length), 5);

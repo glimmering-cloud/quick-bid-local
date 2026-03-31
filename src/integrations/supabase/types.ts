@@ -339,7 +339,6 @@ export type Database = {
           location_lat: number
           location_lng: number
           location_name: string
-          preferred_provider_type: string | null
           radius_km: number | null
           requested_time: string
           status: Database["public"]["Enums"]["request_status"]
@@ -355,7 +354,6 @@ export type Database = {
           location_lat: number
           location_lng: number
           location_name: string
-          preferred_provider_type?: string | null
           radius_km?: number | null
           requested_time: string
           status?: Database["public"]["Enums"]["request_status"]
@@ -371,7 +369,6 @@ export type Database = {
           location_lat?: number
           location_lng?: number
           location_name?: string
-          preferred_provider_type?: string | null
           radius_km?: number | null
           requested_time?: string
           status?: Database["public"]["Enums"]["request_status"]
@@ -432,34 +429,19 @@ export type Database = {
       }
     }
     Functions: {
-      find_matching_providers:
-        | {
-            Args: {
-              radius_km?: number
-              req_category: string
-              req_lat: number
-              req_lng: number
-            }
-            Returns: {
-              business_name: string
-              distance_km: number
-              provider_user_id: string
-            }[]
-          }
-        | {
-            Args: {
-              pref_provider_type?: string
-              radius_km?: number
-              req_category: string
-              req_lat: number
-              req_lng: number
-            }
-            Returns: {
-              business_name: string
-              distance_km: number
-              provider_user_id: string
-            }[]
-          }
+      find_matching_providers: {
+        Args: {
+          radius_km?: number
+          req_category: string
+          req_lat: number
+          req_lng: number
+        }
+        Returns: {
+          business_name: string
+          distance_km: number
+          provider_user_id: string
+        }[]
+      }
       get_booking_counterparty: {
         Args: { p_booking_id: string }
         Returns: {
