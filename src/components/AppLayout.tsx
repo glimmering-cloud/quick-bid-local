@@ -107,6 +107,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {/* Mobile hamburger */}
           <div className="flex items-center gap-2 sm:hidden">
             <LanguageSwitcher />
+            <AccessibilityMenu />
             <ThemeToggle />
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
