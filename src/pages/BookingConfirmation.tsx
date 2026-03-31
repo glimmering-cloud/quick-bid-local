@@ -210,7 +210,7 @@ export default function BookingConfirmation() {
                   </span>
                 )},
                 { label: <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{t("booking.whenLabel")}</span>, value: <span className="font-medium">{format(new Date(request.requested_time), "EEE, MMM d 'at' HH:mm")}</span> },
-                { label: <span className="flex items-center gap-1.5"><User className="h-4 w-4" />{isCustomer ? t("booking.providerLabel") : t("booking.customerLabel")}</span>, value: <span className="font-medium">{counterparty?.display_name || "—"}</span> },
+                { label: <span className="flex items-center gap-1.5"><User className="h-4 w-4" />{isCustomer ? t("booking.providerLabel") : t("booking.customerLabel")}</span>, value: <span className="font-medium">{counterparty?.display_name || request?.title || "—"}</span> },
                 { label: <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" />Contact</span>, value: (
                   <span className="font-medium flex items-center gap-1.5">
                     {counterparty?.masked_phone || "Not provided"}
