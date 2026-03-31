@@ -47,8 +47,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Find matching providers within 2km using the DB function
-    const radiusKm = serviceRequest.radius_km ?? 2.0;
+    // Find matching providers using the DB function with provider type filter
+    const radiusKm = serviceRequest.radius_km ?? 35.0;
+    const prefType = serviceRequest.preferred_provider_type ?? "any";
     const { data: matchedProviders, error: matchError } = await supabase.rpc(
       "find_matching_providers",
       {
@@ -56,6 +57,7 @@ Deno.serve(async (req) => {
         req_lng: serviceRequest.location_lng,
         req_category: serviceRequest.category,
         radius_km: radiusKm,
+        pref_provider_type: prefType,
       }
     );
 
