@@ -210,8 +210,13 @@ export default function CustomerDashboard() {
       <ServiceMap
         center={currentLocation}
         providers={providers.filter(p => {
-          const dist = Math.sqrt(Math.pow(p.lat - currentLocation.lat, 2) + Math.pow(p.lng - currentLocation.lng, 2));
-          return dist < 0.35; // ~35km radius
+          // Haversine distance in km
+          const R = 6371;
+          const dLat = (p.lat - currentLocation.lat) * Math.PI / 180;
+          const dLng = (p.lng - currentLocation.lng) * Math.PI / 180;
+          const a = Math.sin(dLat/2)**2 + Math.cos(currentLocation.lat * Math.PI/180) * Math.cos(p.lat * Math.PI/180) * Math.sin(dLng/2)**2;
+          const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          return d <= 35;
         })}
         heatmapPoints={heatmapPoints}
         className="shadow-sm"
