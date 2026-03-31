@@ -31,6 +31,8 @@ export default function BookingConfirmation() {
   const [startingJob, setStartingJob] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentTxnId, setPaymentTxnId] = useState<string | null>(null);
   const [counterparty, setCounterparty] = useState<{ display_name: string; avatar_url: string | null; masked_phone: string | null } | null>(null);
   const [locationInfo, setLocationInfo] = useState<{ location_name: string; location_lat: number; location_lng: number; is_precise: boolean } | null>(null);
 
