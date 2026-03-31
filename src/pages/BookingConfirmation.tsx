@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper, Star,
-  Loader2, Phone, ShieldCheck, Eye, EyeOff, Lock, Navigation
+  Loader2, Phone, ShieldCheck, Eye, EyeOff, Lock, Navigation, CreditCard
 } from "lucide-react";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { PageLoader } from "@/components/LoadingSkeleton";
 import { ReviewForm } from "@/components/ReviewForm";
 import { ComplaintForm } from "@/components/ComplaintForm";
+import { DemoPaymentGateway } from "@/components/DemoPaymentGateway";
 import { toast } from "sonner";
 
 export default function BookingConfirmation() {
@@ -30,6 +31,8 @@ export default function BookingConfirmation() {
   const [startingJob, setStartingJob] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentTxnId, setPaymentTxnId] = useState<string | null>(null);
   const [counterparty, setCounterparty] = useState<{ display_name: string; avatar_url: string | null; masked_phone: string | null } | null>(null);
   const [locationInfo, setLocationInfo] = useState<{ location_name: string; location_lat: number; location_lng: number; is_precise: boolean } | null>(null);
 
@@ -324,6 +327,41 @@ export default function BookingConfirmation() {
                 {t("booking.cancelBooking")}
               </Button>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Demo Payment Gateway */}
+      {isCustomer && booking.status === "confirmed" && !paymentTxnId && (
+        <div className="space-y-2">
+          {!showPayment ? (
+            <Button onClick={() => setShowPayment(true)} className="w-full rounded-xl gap-2" variant="outline">
+              <CreditCard className="h-4 w-4" />
+              {t("payment.payNow", "Pay Now")}
+            </Button>
+          ) : (
+            <DemoPaymentGateway
+              amount={Number(booking.bids?.price || booking.final_price_chf || 0)}
+              serviceName={request?.title || "Service"}
+              providerName={counterparty?.display_name || "Provider"}
+              onPaymentSuccess={(txnId) => {
+                setPaymentTxnId(txnId);
+                toast.success(t("payment.success", "Payment Successful!"));
+              }}
+              onCancel={() => setShowPayment(false)}
+            />
+          )}
+        </div>
+      )}
+
+      {paymentTxnId && (
+        <Card className="border-success/20 bg-success/5">
+          <CardContent className="p-3 flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-success font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              {t("payment.paid", "Paid")}
+            </span>
+            <span className="text-muted-foreground font-mono text-xs">{paymentTxnId}</span>
           </CardContent>
         </Card>
       )}
