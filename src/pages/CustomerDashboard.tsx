@@ -45,6 +45,7 @@ export default function CustomerDashboard() {
   const [selectedCity, setSelectedCity] = useState(CITIES[0]);
   const [locationIdx, setLocationIdx] = useState(0);
   const [requestedTime, setRequestedTime] = useState("");
+  const [preferredProviderType, setPreferredProviderType] = useState("any");
   const [submitting, setSubmitting] = useState(false);
   const [providers, setProviders] = useState<any[]>([]);
   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
