@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield } from "lucide-react";
