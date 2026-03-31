@@ -179,7 +179,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      <main className="container flex-1 py-6">{children}</main>
+      <main id="main-content" className="container flex-1 py-6" role="main">{children}</main>
 
       <Footer />
     </div>
