@@ -91,7 +91,7 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <p className="font-heading font-semibold text-sm sm:text-base truncate">{providerName}</p>
-                <ProviderTypeIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" title={t(`providerType.${providerType}`)} />
+                <span title={t(`providerType.${providerType}`)}><ProviderTypeIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" /></span>
               </div>
               <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-0.5 text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                 {bid.provider?.rating && (
