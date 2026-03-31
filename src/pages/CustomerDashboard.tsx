@@ -378,6 +378,10 @@ export default function CustomerDashboard() {
       </div>
 
       <BookingHistory role="customer" />
+
+      <div className="flex justify-center">
+        <RaiseTicket />
+      </div>
     </motion.div>
   );
 }
