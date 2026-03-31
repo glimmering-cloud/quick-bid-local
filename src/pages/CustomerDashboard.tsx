@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, MapPin, Clock, ChevronRight, Banknote, Sparkles, Zap } from "lucide-react";
+import { Plus, MapPin, Clock, ChevronRight, Banknote, Sparkles, Zap, Building2, Users, User as UserIcon } from "lucide-react";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
 import { ServiceMap } from "@/components/ServiceMap";
 import { RaiseTicket } from "@/components/RaiseTicket";
