@@ -331,6 +331,41 @@ export default function BookingConfirmation() {
         </Card>
       )}
 
+      {/* Demo Payment Gateway */}
+      {isCustomer && booking.status === "confirmed" && !paymentTxnId && (
+        <div className="space-y-2">
+          {!showPayment ? (
+            <Button onClick={() => setShowPayment(true)} className="w-full rounded-xl gap-2" variant="outline">
+              <CreditCard className="h-4 w-4" />
+              {t("payment.payNow", "Pay Now")}
+            </Button>
+          ) : (
+            <DemoPaymentGateway
+              amount={Number(booking.bids?.price || booking.final_price_chf || 0)}
+              serviceName={request?.title || "Service"}
+              providerName={counterparty?.display_name || "Provider"}
+              onPaymentSuccess={(txnId) => {
+                setPaymentTxnId(txnId);
+                toast.success(t("payment.success", "Payment Successful!"));
+              }}
+              onCancel={() => setShowPayment(false)}
+            />
+          )}
+        </div>
+      )}
+
+      {paymentTxnId && (
+        <Card className="border-success/20 bg-success/5">
+          <CardContent className="p-3 flex items-center justify-between text-sm">
+            <span className="flex items-center gap-1.5 text-success font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              {t("payment.paid", "Paid")}
+            </span>
+            <span className="text-muted-foreground font-mono text-xs">{paymentTxnId}</span>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Reviews & complaints for completed bookings */}
       {booking.status === "completed" && (
         <div className="flex items-center justify-center gap-3">
