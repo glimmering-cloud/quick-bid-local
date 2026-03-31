@@ -69,6 +69,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </Link>
             )}
             <LanguageSwitcher />
+            <AccessibilityMenu />
             <ThemeToggle />
             {user && profile ? (
               <DropdownMenu>
