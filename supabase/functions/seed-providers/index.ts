@@ -6,7 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Swiss city centers for 35km coverage grid
 const CITY_CENTERS = [
   { city: "Zurich", lat: 47.3769, lng: 8.5417 },
   { city: "Bern", lat: 46.9480, lng: 7.4474 },
@@ -33,8 +32,8 @@ const PROVIDER_TEMPLATES: Record<string, { names: string[]; basePrice: number }>
   electrician: { names: ["Elektro", "Électricien", "Electric Pro", "Volt Service", "Elektrik"], basePrice: 98 },
   home_cleaning: { names: ["Reinigung", "Nettoyage", "Clean Pro", "Sauber Service", "Pulizia"], basePrice: 82 },
   beauty: { names: ["Beauty Studio", "Beauté Salon", "Glow Studio", "Esthétique", "Bellezza"], basePrice: 62 },
-  ac_cleaning: { names: ["Klimaservice", "CoolAir", "AC Clean Pro", "Clima Service"], basePrice: 85 },
-  appliance_repair: { names: ["Appliance Fix", "Geräte Reparatur", "Repair Pro", "Handyman Service"], basePrice: 105 },
+  ac_cleaning: { names: ["Klimaservice", "CoolAir", "AC Clean Pro", "Clima Service", "Klima Plus"], basePrice: 85 },
+  appliance_repair: { names: ["Appliance Fix", "Geräte Reparatur", "Repair Pro", "Handyman Service", "Tech Repair"], basePrice: 105 },
 };
 
 const PROVIDER_TYPES = ["company", "agency", "individual"] as const;
@@ -54,19 +53,19 @@ function generateProviders(): DemoProvider[] {
   const usedNames = new Set<string>();
 
   for (const center of CITY_CENTERS) {
-    // For each city, create providers for every category within 35km
+    // 15+ providers per city: ~2-3 per category × 7 categories = 14-21
     for (const cat of CATEGORIES) {
       const templates = PROVIDER_TEMPLATES[cat];
-      // 2-3 providers per category per city
-      const count = cat === "haircut" || cat === "home_cleaning" ? 3 : 2;
+      // 3 providers for common categories, 2 for others → ensures 15+ per city
+      const count = 3;
 
       for (let i = 0; i < count; i++) {
-        // Spread providers within ~20km of city center (well within 35km)
-        const offsetLat = (Math.random() - 0.5) * 0.18; // ~10km
-        const offsetLng = (Math.random() - 0.5) * 0.25;
+        // Spread within ~15km of city center (well within 35km)
+        const offsetLat = (Math.random() - 0.5) * 0.14;
+        const offsetLng = (Math.random() - 0.5) * 0.20;
         const nameBase = templates.names[i % templates.names.length];
-        let bizName = `${center.city} ${nameBase}`;
-        if (usedNames.has(bizName)) bizName = `${bizName} ${i + 1}`;
+        let bizName = `${center.city} ${nameBase} ${i > 0 ? i + 1 : ""}`.trim();
+        if (usedNames.has(bizName)) bizName = `${bizName} Plus`;
         usedNames.add(bizName);
 
         const typeIdx = i % PROVIDER_TYPES.length;
@@ -113,9 +112,7 @@ Deno.serve(async (req) => {
       const password = generatePassword();
 
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
+        email, password, email_confirm: true,
         user_metadata: { display_name: demo.business_name, role: "provider" },
       });
 
@@ -128,8 +125,7 @@ Deno.serve(async (req) => {
             user_id: existing.id,
             business_name: demo.business_name,
             service_category: demo.service_category,
-            latitude: demo.lat,
-            longitude: demo.lng,
+            latitude: demo.lat, longitude: demo.lng,
             rating: demo.rating,
             base_price_chf: demo.base_price,
             provider_type: demo.provider_type,
@@ -144,8 +140,7 @@ Deno.serve(async (req) => {
         await supabase.from("profiles").update({
           role: "provider",
           display_name: demo.business_name,
-          location_lat: demo.lat,
-          location_lng: demo.lng,
+          location_lat: demo.lat, location_lng: demo.lng,
           location_name: demo.business_name.split(" ")[0],
         }).eq("user_id", authData.user.id);
 
@@ -153,8 +148,7 @@ Deno.serve(async (req) => {
           user_id: authData.user.id,
           business_name: demo.business_name,
           service_category: demo.service_category,
-          latitude: demo.lat,
-          longitude: demo.lng,
+          latitude: demo.lat, longitude: demo.lng,
           rating: demo.rating,
           base_price_chf: demo.base_price,
           provider_type: demo.provider_type,
@@ -168,20 +162,16 @@ Deno.serve(async (req) => {
     const adminPassword = "pAss123!(";
     let adminCreated = false;
 
-    // Try delete existing admin first
     const { data: existingAdminUsers } = await supabase.auth.admin.listUsers();
     const oldAdmin = existingAdminUsers?.users?.find(u => u.email === adminEmail);
     if (oldAdmin) {
-      // Update password and ensure admin role
       await supabase.auth.admin.updateUserById(oldAdmin.id, { password: adminPassword });
       await supabase.from("profiles").update({ display_name: "QuickServe Admin" }).eq("user_id", oldAdmin.id);
       await supabase.from("user_roles").upsert({ user_id: oldAdmin.id, role: "admin" }, { onConflict: "user_id,role" });
       adminCreated = true;
     } else {
       const { data: adminAuth, error: adminErr } = await supabase.auth.admin.createUser({
-        email: adminEmail,
-        password: adminPassword,
-        email_confirm: true,
+        email: adminEmail, password: adminPassword, email_confirm: true,
         user_metadata: { display_name: "QuickServe Admin", role: "customer" },
       });
       if (!adminErr && adminAuth?.user) {
@@ -204,9 +194,7 @@ Deno.serve(async (req) => {
       csCreated = true;
     } else {
       const { data: csAuth, error: csErr } = await supabase.auth.admin.createUser({
-        email: csEmail,
-        password: csPassword,
-        email_confirm: true,
+        email: csEmail, password: csPassword, email_confirm: true,
         user_metadata: { display_name: "Customer Care Manager", role: "customer" },
       });
       if (!csErr && csAuth?.user) {
@@ -275,6 +263,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       providers_created: created,
       total_providers: DEMO_PROVIDERS.length,
+      providers_per_city: CATEGORIES.length * 3,
       admin_created: adminCreated,
       cs_created: csCreated,
       bookings_created: bookingsCreated,
