@@ -103,7 +103,7 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
               <p className="font-heading text-xl font-bold">CHF {Number(bid.price).toFixed(0)}</p>
             </div>
             {isCustomer && !requestConfirmed && bid.status === "pending" && (
-              <Button size="sm" onClick={onAccept}>
+              <Button size="sm" onClick={() => setConfirmOpen(true)}>
                 <Check className="mr-1 h-4 w-4" />
                 Accept
               </Button>
