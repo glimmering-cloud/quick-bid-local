@@ -650,10 +650,13 @@ function ComplaintCard({
               <Icon className={`h-4 w-4 ${config.color}`} />
               <span className="text-sm font-semibold">{complaint.title}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
               <span>{CATEGORY_LABELS[complaint.category]}</span>
               <span>·</span>
               <span>by {complaint.reporter_name}</span>
+              {complaint.reporter_phone && (
+                <span className="text-primary">📞 {complaint.reporter_phone}</span>
+              )}
               {complaint.reported_name && (
                 <>
                   <span>→</span>

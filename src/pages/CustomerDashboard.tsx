@@ -211,7 +211,7 @@ export default function CustomerDashboard() {
         center={currentLocation}
         providers={providers.filter(p => {
           const dist = Math.sqrt(Math.pow(p.lat - currentLocation.lat, 2) + Math.pow(p.lng - currentLocation.lng, 2));
-          return dist < 0.15; // ~15km radius
+          return dist < 0.35; // ~35km radius
         })}
         heatmapPoints={heatmapPoints}
         className="shadow-sm"
