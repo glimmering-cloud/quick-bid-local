@@ -37,6 +37,8 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
 
 export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed, requestLat, requestLng, onAccept }: BidRankingCardProps) {
   const { bid, score, tags } = rankedBid;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const providerName = bid.provider?.business_name || bid.profiles?.display_name || "Provider";
 
   const distKm = (bid.provider?.latitude && bid.provider?.longitude && requestLat && requestLng)
     ? haversine(requestLat, requestLng, bid.provider.latitude, bid.provider.longitude)
