@@ -35,6 +35,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <a href="#main-content" className="skip-link bg-primary text-primary-foreground font-medium rounded-b-md">
+        Skip to content
+      </a>
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 font-heading text-lg font-bold">
