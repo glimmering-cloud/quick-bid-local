@@ -187,6 +187,10 @@ export default function ProviderDashboard() {
       </div>
 
       <BookingHistory role="provider" />
+
+      <div className="flex justify-center">
+        <RaiseTicket />
+      </div>
     </motion.div>
   );
 }
