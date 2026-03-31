@@ -92,7 +92,6 @@ export default function ManagementDashboard() {
     const { data } = await query;
 
     if (data && data.length > 0) {
-      // Fetch reporter and reported profiles
       const userIds = [
         ...new Set([
           ...data.map((c) => c.reporter_id),
@@ -101,17 +100,22 @@ export default function ManagementDashboard() {
       ];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name")
+        .select("user_id, display_name, phone")
         .in("user_id", userIds);
 
-      const profileMap = new Map((profiles || []).map((p) => [p.user_id, p.display_name]));
+      const profileMap = new Map((profiles || []).map((p) => [p.user_id, { name: p.display_name, phone: p.phone }]));
 
       setComplaints(
-        data.map((c) => ({
-          ...c,
-          reporter_name: profileMap.get(c.reporter_id) || "Unknown",
-          reported_name: c.reported_user_id ? profileMap.get(c.reported_user_id) || "Unknown" : null,
-        }))
+        data.map((c) => {
+          const reporter = profileMap.get(c.reporter_id);
+          const reported = c.reported_user_id ? profileMap.get(c.reported_user_id) : null;
+          return {
+            ...c,
+            reporter_name: reporter?.name || "Unknown",
+            reporter_phone: reporter?.phone || null,
+            reported_name: reported?.name || null,
+          };
+        })
       );
     } else {
       setComplaints([]);
