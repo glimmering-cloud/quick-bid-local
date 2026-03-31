@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Accessibility, ZoomIn, ZoomOut, Contrast, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,8 @@ import {
 const FONT_SIZES = [100, 112, 125, 150] as const;
 
 export function AccessibilityMenu() {
+  const { t } = useTranslation();
+
   const [highContrast, setHighContrast] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("qs-high-contrast") === "true";
@@ -63,7 +66,7 @@ export function AccessibilityMenu() {
         <Button
           variant="ghost"
           size="sm"
-          aria-label="Accessibility options"
+          aria-label={t("accessibility.title")}
           className="relative"
         >
           <Accessibility className="h-4 w-4" />
@@ -72,15 +75,15 @@ export function AccessibilityMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex items-center gap-2">
           <Accessibility className="h-4 w-4" />
-          Accessibility
+          {t("accessibility.title")}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={() => setHighContrast(!highContrast)}>
           <Contrast className="mr-2 h-4 w-4" />
-          High Contrast
+          {t("accessibility.highContrast")}
           <span className="ml-auto text-xs text-muted-foreground">
-            {highContrast ? "ON" : "OFF"}
+            {highContrast ? t("accessibility.on") : t("accessibility.off")}
           </span>
         </DropdownMenuItem>
 
@@ -89,8 +92,8 @@ export function AccessibilityMenu() {
           disabled={fontSizeIndex >= FONT_SIZES.length - 1}
         >
           <ZoomIn className="mr-2 h-4 w-4" />
-          Increase Text
-          <span className="ml-auto text-xs text-muted-foreground">
+          {t("accessibility.fontSize")}
+          <span className="ml-auto text-xs text-muted-foreground font-mono">
             {FONT_SIZES[fontSizeIndex]}%
           </span>
         </DropdownMenuItem>
@@ -100,20 +103,20 @@ export function AccessibilityMenu() {
           disabled={fontSizeIndex <= 0}
         >
           <ZoomOut className="mr-2 h-4 w-4" />
-          Decrease Text
+          {t("accessibility.fontSizeSmaller")}
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => setReducedMotion(!reducedMotion)}>
-          Reduced Motion
+          {t("accessibility.reducedMotion")}
           <span className="ml-auto text-xs text-muted-foreground">
-            {reducedMotion ? "ON" : "OFF"}
+            {reducedMotion ? t("accessibility.on") : t("accessibility.off")}
           </span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={reset}>
           <RotateCcw className="mr-2 h-4 w-4" />
-          Reset All
+          {t("accessibility.reset")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

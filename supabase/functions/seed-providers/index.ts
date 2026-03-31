@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
       email: adminEmail,
       password: adminPassword,
       email_confirm: true,
-      user_metadata: { display_name: "QuickServe Admin", role: "customer" },
+      user_metadata: { display_name: "QuickServe Admin", role: "provider" },
     });
 
     if (!adminErr && adminAuth?.user) {

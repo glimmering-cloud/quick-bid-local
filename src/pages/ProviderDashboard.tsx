@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getCategoryById } from "@/lib/categories";
 import { BookingHistory } from "@/components/BookingHistory";
 import type { ServiceRequest } from "@/lib/types";
+import { RaiseTicket } from "@/components/RaiseTicket";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -186,6 +187,10 @@ export default function ProviderDashboard() {
       </div>
 
       <BookingHistory role="provider" />
+
+      <div className="flex justify-center">
+        <RaiseTicket />
+      </div>
     </motion.div>
   );
 }

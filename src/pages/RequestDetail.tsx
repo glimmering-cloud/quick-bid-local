@@ -144,7 +144,8 @@ export default function RequestDetail() {
       return;
     }
 
-    toast.success(`${t("request.bookingConfirmed")} ${bid.profiles?.display_name}!`);
+    const providerName = bid.provider?.business_name || bid.profiles?.display_name || t("auth.provider");
+    toast.success(`${t("request.bookingConfirmed")} ${providerName}!`);
     navigate(`/booking/${request.id}`);
   };
 
@@ -223,7 +224,7 @@ export default function RequestDetail() {
       <div>
         <h2 className="font-heading text-lg font-semibold mb-3 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          {t("request.bids")} {bids.length > 0 && <span className="text-muted-foreground font-normal text-sm">({bids.length} ranked by AI)</span>}
+          {t("request.bids")} {bids.length > 0 && <span className="text-muted-foreground font-normal text-sm">({bids.length} {t("request.rankedByAi")})</span>}
         </h2>
 
         {bids.length === 0 && (
