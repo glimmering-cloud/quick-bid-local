@@ -135,6 +135,24 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
           <p className="text-sm text-muted-foreground line-clamp-2">{bid.message}</p>
         )}
       </CardContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Accept this bid?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to accept the bid from <strong>{providerName}</strong> for{" "}
+              <strong>CHF {Number(bid.price).toFixed(0)}</strong>.
+              {bid.estimated_wait_minutes && <> Estimated wait: {bid.estimated_wait_minutes} min.</>}
+              {" "}This action will reject all other bids and create a booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onAccept}>Confirm &amp; Book</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
