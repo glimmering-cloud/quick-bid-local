@@ -1,6 +1,17 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Timer, Star, TrendingUp, Navigation } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { RankedBid } from "@/lib/ranking";
 import { estimateETA } from "@/lib/ranking";
 
@@ -26,6 +37,8 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
 
 export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed, requestLat, requestLng, onAccept }: BidRankingCardProps) {
   const { bid, score, tags } = rankedBid;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const providerName = bid.provider?.business_name || bid.profiles?.display_name || "Provider";
 
   const distKm = (bid.provider?.latitude && bid.provider?.longitude && requestLat && requestLng)
     ? haversine(requestLat, requestLng, bid.provider.latitude, bid.provider.longitude)
@@ -52,7 +65,7 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
               #{index + 1}
             </div>
             <div>
-              <p className="font-medium">{bid.profiles?.display_name || "Provider"}</p>
+              <p className="font-medium">{providerName}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 {bid.provider?.rating && (
                   <span className="flex items-center gap-0.5">
@@ -90,7 +103,7 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
               <p className="font-heading text-xl font-bold">CHF {Number(bid.price).toFixed(0)}</p>
             </div>
             {isCustomer && !requestConfirmed && bid.status === "pending" && (
-              <Button size="sm" onClick={onAccept}>
+              <Button size="sm" onClick={() => setConfirmOpen(true)}>
                 <Check className="mr-1 h-4 w-4" />
                 Accept
               </Button>
@@ -122,6 +135,24 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
           <p className="text-sm text-muted-foreground line-clamp-2">{bid.message}</p>
         )}
       </CardContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Accept this bid?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to accept the bid from <strong>{providerName}</strong> for{" "}
+              <strong>CHF {Number(bid.price).toFixed(0)}</strong>.
+              {bid.estimated_wait_minutes && <> Estimated wait: {bid.estimated_wait_minutes} min.</>}
+              {" "}This action will reject all other bids and create a booking.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onAccept}>Confirm &amp; Book</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield } from "lucide-react";
@@ -34,6 +35,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <a href="#main-content" className="skip-link bg-primary text-primary-foreground font-medium rounded-b-md">
+        Skip to content
+      </a>
       <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 font-heading text-lg font-bold">
@@ -68,6 +72,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </Link>
             )}
             <LanguageSwitcher />
+            <AccessibilityMenu />
             <ThemeToggle />
             {user && profile ? (
               <DropdownMenu>
@@ -105,6 +110,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {/* Mobile hamburger */}
           <div className="flex items-center gap-2 sm:hidden">
             <LanguageSwitcher />
+            <AccessibilityMenu />
             <ThemeToggle />
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -173,7 +179,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      <main className="container flex-1 py-6">{children}</main>
+      <main id="main-content" className="container flex-1 py-6" role="main">{children}</main>
 
       <Footer />
     </div>
