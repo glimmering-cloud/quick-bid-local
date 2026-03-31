@@ -6,14 +6,56 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const DEMO_PROVIDER_NAMES: Record<string, string[]> = {
-  haircut: ["Marco's Barbershop", "Züri Cuts", "Swiss Blade Studio", "Alpine Grooming", "Bahnhof Barbers"],
-  plumbing: ["Zürich Plumbing Co", "SwissFlow Plumbers", "AquaFix Services", "PipeWorks Zürich", "RapidDrain Solutions"],
-  ac_cleaning: ["CoolAir Zürich", "Swiss AC Pros", "Alpine Climate Care", "FreshBreeze HVAC", "CleanAir Solutions"],
-  electrician: ["ZüriVolt Electric", "Swiss Spark Services", "PowerLine Zürich", "LightUp Electric", "WireWorks Pro"],
-  home_cleaning: ["SparkleClean Zürich", "Swiss Maids Co", "FreshHome Services", "Alpine Clean Team", "TidySpace Zürich"],
-  beauty: ["Glow Studio Zürich", "Swiss Beauty Hub", "Elegance Spa", "Belle Beauty Bar", "Radiance Zürich"],
-  appliance_repair: ["FixIt Zürich", "Swiss Appliance Pros", "RepairMaster Co", "TechFix Services", "HomeRepair Hub"],
+const BID_MESSAGES: Record<string, string[]> = {
+  haircut: [
+    "Available now! I specialize in modern Swiss cuts.",
+    "Can be there shortly — 10+ years experience.",
+    "Quick and precise — walk-in ready!",
+    "Expert in fades, classic, and trending styles.",
+    "I'll bring the tools — mobile barber at your service!",
+  ],
+  plumbing: [
+    "Emergency-ready! Tools loaded and on the way.",
+    "Licensed plumber — fast diagnostics guaranteed.",
+    "No hidden fees — transparent pricing always.",
+    "Available immediately with all parts in stock.",
+    "Swiss certified — quality work, first time.",
+  ],
+  ac_cleaning: [
+    "Deep-clean specialist — HEPA filtration included.",
+    "Eco-friendly cleaning products, Swiss quality.",
+    "Full AC service + filter replacement included.",
+    "Available today — commercial & residential.",
+    "Post-cleaning air quality test included free!",
+  ],
+  electrician: [
+    "Swiss-certified electrician — safety first.",
+    "Smart home specialist — modern solutions.",
+    "Available now with all standard parts.",
+    "Emergency service — fast response guaranteed.",
+    "Full diagnostic + repair in one visit.",
+  ],
+  home_cleaning: [
+    "Eco-friendly deep clean — Swiss precision.",
+    "Team of 2 for faster service!",
+    "All supplies included — just open the door.",
+    "Specializing in move-in/move-out cleaning.",
+    "Regular clients love our attention to detail!",
+  ],
+  beauty: [
+    "Mobile beauty station — salon experience at home.",
+    "Premium products only — Dermalogica & MAC.",
+    "Bridal & event specialist available now.",
+    "Swiss trained — hygiene-certified studio.",
+    "Full treatment menu — nails, skin, hair.",
+  ],
+  appliance_repair: [
+    "All major brands — same-day diagnosis.",
+    "Parts in stock for most Swiss appliances.",
+    "20+ years fixing home appliances.",
+    "Warranty on all repairs — 90 days.",
+    "Energy-efficiency check included free!",
+  ],
 };
 
 Deno.serve(async (req) => {
@@ -34,7 +76,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch the request
     const { data: serviceRequest, error: reqError } = await supabase
       .from("service_requests")
       .select("*")
@@ -56,49 +97,44 @@ Deno.serve(async (req) => {
 
     const providers = realProviders || [];
     const numBids = Math.min(Math.max(3, providers.length), 5);
-    
-    // Get category-specific demo names as fallback
-    const demoNames = DEMO_PROVIDER_NAMES[serviceRequest.category] || DEMO_PROVIDER_NAMES.haircut;
-    
+
+    const messages = BID_MESSAGES[serviceRequest.category] || BID_MESSAGES.haircut;
+
     const bids = [];
     for (let i = 0; i < numBids; i++) {
       const provider = providers[i];
-      const basePrice = provider?.base_price_chf ? Number(provider.base_price_chf) : (30 + Math.random() * 80);
-      const variation = 0.8 + Math.random() * 0.4;
+      if (!provider) continue;
+
+      const basePrice = provider.base_price_chf ? Number(provider.base_price_chf) : (30 + Math.random() * 80);
+      const variation = 0.85 + Math.random() * 0.3;
       const price = Math.round(basePrice * variation);
-      const waitMin = Math.round(5 + Math.random() * 25);
-      
-      if (provider) {
-        // Use real provider
-        bids.push({
-          request_id,
-          provider_id: provider.user_id,
-          price,
-          estimated_wait_minutes: waitMin,
-          message: `Available now! ${demoNames[i % demoNames.length]} at your service.`,
-          delay_ms: (i + 1) * 2000 + Math.random() * 1500,
-        });
-      }
+      const waitMin = Math.round(5 + Math.random() * 20);
+
+      bids.push({
+        request_id,
+        provider_id: provider.user_id,
+        price,
+        estimated_wait_minutes: waitMin,
+        message: messages[i % messages.length],
+        delay_ms: (i + 1) * 1200 + Math.random() * 800, // Fast: 1.2-2s between bids
+      });
     }
 
-    // If no real providers, we can't insert bids (no valid provider_id)
-    // But we'll update the request status to show it's active
     if (bids.length === 0) {
       await supabase.from("service_requests").update({ status: "bidding" }).eq("id", request_id);
-      return new Response(JSON.stringify({ simulated: 0, message: "No providers available for simulation" }), {
+      return new Response(JSON.stringify({ simulated: 0, message: "No providers available" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Insert bids with delays (simulated via sequential inserts with sleep)
     let inserted = 0;
     for (const bid of bids) {
       const delayMs = bid.delay_ms;
       delete (bid as any).delay_ms;
-      
+
       await new Promise(resolve => setTimeout(resolve, delayMs));
-      
+
       const { error } = await supabase.from("bids").insert({
         request_id: bid.request_id,
         provider_id: bid.provider_id,
@@ -106,10 +142,9 @@ Deno.serve(async (req) => {
         estimated_wait_minutes: bid.estimated_wait_minutes,
         message: bid.message,
       });
-      
+
       if (!error) {
         inserted++;
-        // Update status to bidding after first bid
         if (inserted === 1) {
           await supabase.from("service_requests").update({ status: "bidding" }).eq("id", request_id);
         }

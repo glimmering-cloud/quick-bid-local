@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Timer, Star, TrendingUp, Navigation } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Check, Timer, Star, TrendingUp, Navigation, Sparkles, Award } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,43 +46,55 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
     : null;
   const eta = distKm !== null ? estimateETA(distKm) : null;
 
-  const tagColorMap: Record<string, string> = {
-    success: "bg-success/10 text-success border-success/20",
-    primary: "bg-primary/10 text-primary border-primary/20",
-    warning: "bg-warning/10 text-warning border-warning/20",
-    accent: "bg-accent/10 text-accent-foreground border-accent/20",
-  };
+  const isTop = index === 0;
+  const isAccepted = bid.status === "accepted";
 
   return (
     <Card
-      className={`transition-all animate-fade-in-up ${
-        index === 0 ? "border-primary/30 shadow-md ring-1 ring-primary/10" : ""
-      } ${bid.status === "accepted" ? "border-success/30 bg-success/5" : ""}`}
+      className={`transition-all duration-300 animate-fade-in-up overflow-hidden ${
+        isTop ? "border-primary/40 shadow-lg ring-2 ring-primary/15" : "hover:shadow-md"
+      } ${isAccepted ? "border-success/40 bg-success/5 ring-2 ring-success/15" : ""}`}
+      style={{ animationDelay: `${index * 100}ms` }}
     >
-      <CardContent className="p-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-bold">
-              #{index + 1}
+      {/* Top pick banner */}
+      {isTop && !isAccepted && (
+        <div className="bg-primary/10 border-b border-primary/20 px-4 py-1.5 flex items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold text-primary">AI Recommended — Best Overall Match</span>
+          <span className="ml-auto text-xs text-primary/70 font-mono">{(score * 100).toFixed(0)}% match</span>
+        </div>
+      )}
+
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Rank badge */}
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
+              isTop ? "bg-primary text-primary-foreground shadow-sm" :
+              index === 1 ? "bg-secondary text-foreground" :
+              "bg-muted text-muted-foreground"
+            }`}>
+              {isTop ? <Award className="h-5 w-5" /> : `#${index + 1}`}
             </div>
-            <div>
-              <p className="font-medium">{providerName}</p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+
+            <div className="min-w-0">
+              <p className="font-heading font-semibold text-base truncate">{providerName}</p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-0.5">
                 {bid.provider?.rating && (
-                  <span className="flex items-center gap-0.5">
-                    <Star className="h-3 w-3 text-warning" />
+                  <span className="flex items-center gap-0.5 font-medium">
+                    <Star className="h-3 w-3 text-warning fill-warning" />
                     {Number(bid.provider.rating).toFixed(1)}
                   </span>
                 )}
                 {distKm !== null && (
                   <span className="flex items-center gap-0.5">
-                    <Navigation className="h-3 w-3" />
+                    <Navigation className="h-3 w-3 text-primary" />
                     {distKm.toFixed(1)} km
                   </span>
                 )}
                 {eta !== null && (
-                  <span className="flex items-center gap-0.5">
-                    <Timer className="h-3 w-3" />
+                  <span className="flex items-center gap-0.5 font-medium text-foreground">
+                    <Timer className="h-3 w-3 text-success" />
                     ~{eta} min ETA
                   </span>
                 )}
@@ -91,65 +104,96 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
                     {bid.estimated_wait_minutes} min wait
                   </span>
                 )}
-                <span className="flex items-center gap-0.5">
-                  <TrendingUp className="h-3 w-3" />
-                  Score: {(score * 100).toFixed(0)}
-                </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-3 shrink-0">
             <div className="text-right">
-              <p className="font-heading text-xl font-bold">CHF {Number(bid.price).toFixed(0)}</p>
+              <p className={`font-heading font-bold ${isTop ? "text-2xl" : "text-xl"}`}>
+                CHF {Number(bid.price).toFixed(0)}
+              </p>
+              {!isTop && (
+                <p className="text-[10px] text-muted-foreground">
+                  Score: {(score * 100).toFixed(0)}%
+                </p>
+              )}
             </div>
             {isCustomer && !requestConfirmed && bid.status === "pending" && (
-              <Button size="sm" onClick={() => setConfirmOpen(true)}>
+              <Button
+                size={isTop ? "default" : "sm"}
+                onClick={() => setConfirmOpen(true)}
+                className={isTop ? "rounded-xl shadow-sm" : ""}
+              >
                 <Check className="mr-1 h-4 w-4" />
-                Accept
+                {isTop ? "Accept Best" : "Accept"}
               </Button>
             )}
-            {bid.status === "accepted" && (
-              <span className="rounded-full bg-success/10 border border-success/20 px-3 py-1 text-sm font-medium text-success">
+            {isAccepted && (
+              <span className="rounded-full bg-success/10 border border-success/20 px-3 py-1 text-sm font-semibold text-success flex items-center gap-1">
+                <Check className="h-3.5 w-3.5" />
                 Accepted
               </span>
             )}
           </div>
         </div>
 
+        {/* Tags row */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag) => (
-              <span
+              <Badge
                 key={tag.label}
-                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tagColorMap[tag.color] || tagColorMap.primary}`}
+                variant={tag.color === "success" ? "default" : "secondary"}
+                className={`text-xs font-medium ${
+                  tag.color === "success" ? "bg-success/15 text-success border-success/25 hover:bg-success/20" :
+                  tag.color === "warning" ? "bg-warning/15 text-warning border-warning/25 hover:bg-warning/20" :
+                  tag.color === "primary" ? "bg-primary/15 text-primary border-primary/25 hover:bg-primary/20" :
+                  "bg-accent text-accent-foreground"
+                }`}
                 title={tag.reason}
               >
                 {tag.label}
-                <span className="ml-1 text-[10px] opacity-70">— {tag.reason}</span>
-              </span>
+              </Badge>
             ))}
           </div>
         )}
 
+        {/* Message */}
         {bid.message && (
-          <p className="text-sm text-muted-foreground line-clamp-2">{bid.message}</p>
+          <p className="text-sm text-muted-foreground italic line-clamp-2 border-l-2 border-primary/20 pl-3">
+            "{bid.message}"
+          </p>
         )}
       </CardContent>
 
+      {/* Confirm dialog */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Accept this bid?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to accept the bid from <strong>{providerName}</strong> for{" "}
-              <strong>CHF {Number(bid.price).toFixed(0)}</strong>.
-              {bid.estimated_wait_minutes && <> Estimated wait: {bid.estimated_wait_minutes} min.</>}
-              {" "}This action will reject all other bids and create a booking.
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-success" />
+              Accept this bid?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                You are about to accept the bid from <strong>{providerName}</strong> for{" "}
+                <strong>CHF {Number(bid.price).toFixed(0)}</strong>.
+              </span>
+              {bid.estimated_wait_minutes && (
+                <span className="block">⏱ Estimated wait: {bid.estimated_wait_minutes} minutes</span>
+              )}
+              {eta !== null && (
+                <span className="block">🚗 Estimated arrival: ~{eta} minutes</span>
+              )}
+              <span className="block text-xs">This will reject all other bids and create a booking.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onAccept}>Confirm &amp; Book</AlertDialogAction>
+            <AlertDialogAction onClick={onAccept} className="bg-success hover:bg-success/90 text-success-foreground">
+              Confirm &amp; Book
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Clock, ArrowLeft, Send, Check, Banknote, Timer, Star, TrendingUp } from "lucide-react";
 import { ServiceMap } from "@/components/ServiceMap";
 import { BidRankingCard } from "@/components/BidRankingCard";
+import { LiveBiddingIndicator } from "@/components/LiveBiddingIndicator";
 import { PriceSuggestion } from "@/components/PriceSuggestion";
 import { rankBids } from "@/lib/ranking";
 import { getCategoryById } from "@/lib/categories";
@@ -214,10 +215,15 @@ export default function RequestDetail() {
         <ServiceMap center={{ lat: request.location_lat, lng: request.location_lng }} providers={mapProviders} className="shadow-sm" />
       )}
 
+      {/* Live bidding indicator */}
+      {isCustomer && (request.status === "open" || request.status === "bidding") && (
+        <LiveBiddingIndicator bidCount={bids.length} isLive={true} />
+      )}
+
       <div>
         <h2 className="font-heading text-lg font-semibold mb-3 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          {t("request.bids")} {bids.length > 0 && <span className="text-muted-foreground font-normal text-sm">({bids.length})</span>}
+          {t("request.bids")} {bids.length > 0 && <span className="text-muted-foreground font-normal text-sm">({bids.length} ranked by AI)</span>}
         </h2>
 
         {bids.length === 0 && (
