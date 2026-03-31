@@ -150,7 +150,8 @@ export default function CustomerDashboard() {
       description, category,
       location_lat: loc.lat, location_lng: loc.lng, location_name: loc.name,
       requested_time: new Date(requestedTime).toISOString(),
-    });
+      preferred_provider_type: preferredProviderType,
+    } as any);
 
     if (error) {
       toast.error(error.message);
