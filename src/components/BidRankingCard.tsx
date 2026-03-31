@@ -65,7 +65,7 @@ export function BidRankingCard({ rankedBid, index, isCustomer, requestConfirmed,
               #{index + 1}
             </div>
             <div>
-              <p className="font-medium">{bid.profiles?.display_name || "Provider"}</p>
+              <p className="font-medium">{providerName}</p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 {bid.provider?.rating && (
                   <span className="flex items-center gap-0.5">
