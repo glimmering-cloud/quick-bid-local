@@ -345,6 +345,7 @@ export default {
     submit: "Submit Ticket",
   },
   providerType: {
+    any: "Any",
     company: "Company",
     agency: "Agency",
     individual: "Individual",
