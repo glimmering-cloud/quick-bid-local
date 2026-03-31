@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, MapPin, Clock, ChevronRight, Banknote, Sparkles, Zap } from "lucide-react";
+import { Plus, MapPin, Clock, ChevronRight, Banknote, Sparkles, Zap, Building2, Users, User as UserIcon } from "lucide-react";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
 import { ServiceMap } from "@/components/ServiceMap";
 import { RaiseTicket } from "@/components/RaiseTicket";
@@ -45,6 +45,7 @@ export default function CustomerDashboard() {
   const [selectedCity, setSelectedCity] = useState(CITIES[0]);
   const [locationIdx, setLocationIdx] = useState(0);
   const [requestedTime, setRequestedTime] = useState("");
+  const [preferredProviderType, setPreferredProviderType] = useState("any");
   const [submitting, setSubmitting] = useState(false);
   const [providers, setProviders] = useState<any[]>([]);
   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
@@ -149,7 +150,8 @@ export default function CustomerDashboard() {
       description, category,
       location_lat: loc.lat, location_lng: loc.lng, location_name: loc.name,
       requested_time: new Date(requestedTime).toISOString(),
-    });
+      preferred_provider_type: preferredProviderType,
+    } as any);
 
     if (error) {
       toast.error(error.message);
@@ -295,6 +297,28 @@ export default function CustomerDashboard() {
                           >
                             <MapPin className="inline h-3.5 w-3.5 mr-1" />
                             {loc.name.replace(/^(Zurich|Bern|Lausanne|Genève) /, "")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("dashboard.providerType", "Provider Type")}</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[
+                          { id: "any", label: t("providerType.any", "Any"), icon: Sparkles },
+                          { id: "company", label: t("providerType.company"), icon: Building2 },
+                          { id: "agency", label: t("providerType.agency"), icon: Users },
+                          { id: "individual", label: t("providerType.individual"), icon: UserIcon },
+                        ].map((pt) => (
+                          <button
+                            key={pt.id} type="button"
+                            onClick={() => setPreferredProviderType(pt.id)}
+                            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm transition-all duration-200 ${
+                              preferredProviderType === pt.id ? "border-primary bg-primary/5 text-primary font-medium shadow-sm" : "border-border hover:border-muted-foreground/30"
+                            }`}
+                          >
+                            <pt.icon className="h-3.5 w-3.5" />
+                            {pt.label}
                           </button>
                         ))}
                       </div>
