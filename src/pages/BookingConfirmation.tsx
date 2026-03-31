@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   MapPin, Clock, User, CheckCircle2, ArrowLeft, PartyPopper, Star,
-  Loader2, Phone, ShieldCheck, Eye, EyeOff, Lock, Navigation
+  Loader2, Phone, ShieldCheck, Eye, EyeOff, Lock, Navigation, CreditCard
 } from "lucide-react";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { PageLoader } from "@/components/LoadingSkeleton";
 import { ReviewForm } from "@/components/ReviewForm";
 import { ComplaintForm } from "@/components/ComplaintForm";
+import { DemoPaymentGateway } from "@/components/DemoPaymentGateway";
 import { toast } from "sonner";
 
 export default function BookingConfirmation() {
