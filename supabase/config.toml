@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.invite-staff]
 verify_jwt = false
+
+[functions.seed-customers]
+verify_jwt = false

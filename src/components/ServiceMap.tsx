@@ -48,10 +48,18 @@ export function ServiceMap({ center, providers, heatmapPoints, onProviderClick, 
       maxZoom: 18,
     });
 
+    const streetLabels = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18,
+      opacity: 0.45,
+    });
+
+    const satelliteWithStreets = L.layerGroup([satellite, streetLabels]);
+
     streets.addTo(leafletMap.current);
 
     L.control.layers(
-      { "Street": streets, "Satellite": satellite },
+      { "Street": streets, "Satellite + Streets": satelliteWithStreets },
       {},
       { position: "topright" }
     ).addTo(leafletMap.current);
