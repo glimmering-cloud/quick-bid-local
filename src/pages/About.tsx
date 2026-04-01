@@ -266,7 +266,7 @@ export default function About() {
 
       {/* Impact */}
       <Section id="impact">
-        <SlideBadge number={7} color="bg-orange-600" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">Impact</h2>
         <div className="mt-12 grid grid-cols-2 gap-6 md:grid-cols-4">
           {impacts.map((imp, i) => (
