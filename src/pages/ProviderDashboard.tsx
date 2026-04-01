@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, ChevronRight, Zap, User, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCategoryById } from "@/lib/categories";
-import { getCityFromCoords, getLocationNamesForCity } from "@/lib/locations";
+
 import { BookingHistory } from "@/components/BookingHistory";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { ProviderPlatformFees } from "@/components/ProviderPlatformFees";
@@ -72,6 +72,7 @@ export default function ProviderDashboard() {
 
     const myCategory = providerData?.service_category;
 
+    // Fetch all open/bidding requests matching provider's category
     let reqQuery = supabase
       .from("service_requests")
       .select("*")
@@ -82,20 +83,27 @@ export default function ProviderDashboard() {
       reqQuery = reqQuery.eq("category", myCategory);
     }
 
-    // Filter by provider's city
-    if (providerData?.latitude && providerData?.longitude) {
-      const myCity = getCityFromCoords(providerData.latitude, providerData.longitude);
-      const cityLocationNames = getLocationNamesForCity(myCity);
-      if (cityLocationNames.length > 0) {
-        reqQuery = reqQuery.in("location_name", cityLocationNames);
-      }
-    }
-
     const [{ data: reqs }, { data: bids }] = await Promise.all([
       reqQuery,
       supabase.from("bids").select("request_id").eq("provider_id", user.id),
     ]);
-    const rawReqs = reqs || [];
+
+    // Client-side distance filter: show requests within 35km if provider has coords
+    let filteredReqs = reqs || [];
+    if (providerData?.latitude && providerData?.longitude) {
+      const R = 6371;
+      filteredReqs = filteredReqs.filter(r => {
+        const dLat = (r.location_lat - providerData.latitude!) * Math.PI / 180;
+        const dLng = (r.location_lng - providerData.longitude!) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+          Math.cos(providerData.latitude! * Math.PI / 180) * Math.cos(r.location_lat * Math.PI / 180) *
+          Math.sin(dLng / 2) ** 2;
+        const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return d <= 35;
+      });
+    }
+
+    const rawReqs = filteredReqs;
     if (rawReqs.length > 0) {
       const customerIds = [...new Set(rawReqs.map(r => r.customer_id))];
       const { data: profiles } = await supabase.from("public_profiles").select("user_id, display_name").in("user_id", customerIds);
