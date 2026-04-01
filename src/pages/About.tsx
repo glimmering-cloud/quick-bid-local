@@ -187,7 +187,7 @@ export default function About() {
 
       {/* What Makes Us Unique */}
       <Section id="unique">
-        <SlideBadge number={5} color="bg-purple-600" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">
           What makes us <span className="text-purple-600">unique</span>
         </h2>
