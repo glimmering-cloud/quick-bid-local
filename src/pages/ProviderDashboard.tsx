@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, ChevronRight, Zap, User, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCategoryById } from "@/lib/categories";
-import { getCityFromCoords, getLocationNamesForCity } from "@/lib/locations";
+
 import { BookingHistory } from "@/components/BookingHistory";
 import { TransactionHistory } from "@/components/TransactionHistory";
 import { ProviderPlatformFees } from "@/components/ProviderPlatformFees";
