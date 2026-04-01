@@ -429,6 +429,7 @@ export default function CustomerDashboard() {
       </div>
 
       <BookingHistory role="customer" />
+      <TransactionHistory role="customer" />
 
       <div className="flex justify-center">
         <RaiseTicket />
