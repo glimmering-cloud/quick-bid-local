@@ -204,6 +204,51 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_fees: {
+        Row: {
+          created_at: string
+          fee_amount: number
+          fee_pct: number
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          payment_ref: string | null
+          period_month: string
+          provider_id: string
+          status: string
+          total_earnings: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fee_amount?: number
+          fee_pct?: number
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          period_month: string
+          provider_id: string
+          status?: string
+          total_earnings?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fee_amount?: number
+          fee_pct?: number
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          period_month?: string
+          provider_id?: string
+          status?: string
+          total_earnings?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
