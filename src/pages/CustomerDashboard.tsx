@@ -39,7 +39,7 @@ export default function CustomerDashboard() {
   const [lowestBids, setLowestBids] = useState<Record<string, number>>({});
   const [showForm, setShowForm] = useState(false);
   const [useNLP, setUseNLP] = useState(true);
-  const [demoMode, setDemoMode] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("haircut");
@@ -211,7 +211,7 @@ export default function CustomerDashboard() {
           <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-1.5">
             <Zap className="h-3.5 w-3.5 text-warning" />
             <Label htmlFor="demo-mode" className="text-xs text-muted-foreground cursor-pointer">{t("dashboard.demo")}</Label>
             <Switch id="demo-mode" checked={demoMode} onCheckedChange={setDemoMode} />
