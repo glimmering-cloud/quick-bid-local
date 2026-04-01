@@ -49,6 +49,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-1.5 sm:flex">
+            <Link to="/about">
+              <Button
+                variant={location.pathname === "/about" ? "secondary" : "ghost"}
+                size="sm"
+              >
+                About
+              </Button>
+            </Link>
             {user && profile && (
               <Link to={dashboardPath}>
                 <Button
