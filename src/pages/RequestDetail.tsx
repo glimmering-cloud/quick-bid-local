@@ -134,9 +134,9 @@ export default function RequestDetail() {
     const { error: acceptError } = await supabase.from("bids").update({ status: "accepted" as any }).eq("id", bid.id);
     if (acceptError) { toast.error(acceptError.message); setPendingBid(null); return; }
 
-    const { error: bookingError } = await supabase.from("bookings").insert({
+    const { data: bookingData, error: bookingError } = await supabase.from("bookings").insert({
       request_id: request.id, bid_id: bid.id, customer_id: user.id, provider_id: bid.provider_id, final_price_chf: Number(bid.price),
-    });
+    }).select("id").single();
 
     if (bookingError) {
       await supabase.from("bids").update({ status: "pending" as any }).eq("id", bid.id);
@@ -306,6 +306,8 @@ export default function RequestDetail() {
             amount={Number(pendingBid.price)}
             serviceName={request.title}
             providerName={pendingBid.provider?.business_name || pendingBid.profiles?.display_name || "Provider"}
+            requestId={request.id}
+            providerId={pendingBid.provider_id}
             onPaymentSuccess={handlePaymentSuccess}
             onCancel={() => setPendingBid(null)}
           />

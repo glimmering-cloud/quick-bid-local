@@ -416,6 +416,63 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          bank_charges: number
+          booking_id: string
+          convenience_fee: number
+          convenience_fee_pct: number
+          created_at: string
+          currency: string
+          customer_id: string
+          id: string
+          payment_method: string
+          provider_id: string
+          provider_payout: number
+          request_id: string
+          service_amount: number
+          status: string
+          total_charged: number
+          transaction_ref: string
+        }
+        Insert: {
+          bank_charges?: number
+          booking_id: string
+          convenience_fee: number
+          convenience_fee_pct?: number
+          created_at?: string
+          currency?: string
+          customer_id: string
+          id?: string
+          payment_method?: string
+          provider_id: string
+          provider_payout: number
+          request_id: string
+          service_amount: number
+          status?: string
+          total_charged: number
+          transaction_ref: string
+        }
+        Update: {
+          bank_charges?: number
+          booking_id?: string
+          convenience_fee?: number
+          convenience_fee_pct?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          id?: string
+          payment_method?: string
+          provider_id?: string
+          provider_payout?: number
+          request_id?: string
+          service_amount?: number
+          status?: string
+          total_charged?: number
+          transaction_ref?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
