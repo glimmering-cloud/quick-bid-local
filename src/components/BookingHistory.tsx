@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
-import { History, MapPin, Clock, Star, ChevronRight, ShieldCheck, Loader2 } from "lucide-react";
+import { History, MapPin, Clock, Star, ChevronRight, ShieldCheck, Loader2, CheckCircle2, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -25,6 +25,7 @@ export function BookingHistory({ role }: BookingHistoryProps) {
   const [loading, setLoading] = useState(true);
   const [pinInputs, setPinInputs] = useState<Record<string, string>>({});
   const [verifying, setVerifying] = useState<string | null>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -98,6 +99,19 @@ export function BookingHistory({ role }: BookingHistoryProps) {
     setVerifying(null);
   };
 
+  const handleMarkComplete = async (booking: any) => {
+    setCompletingId(booking.id);
+    const { error } = await supabase.from("bookings").update({ status: "completed" as any }).eq("id", booking.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      await supabase.from("service_requests").update({ status: "completed" as any }).eq("id", booking.request_id);
+      toast.success("Job marked as complete!");
+      loadBookings();
+    }
+    setCompletingId(null);
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
       case "confirmed": return "bg-primary/10 text-primary border-primary/20";
@@ -124,6 +138,8 @@ export function BookingHistory({ role }: BookingHistoryProps) {
           const req = booking.request;
           const cat = req ? getCategoryById(req.category) : null;
           const showPinInput = role === "provider" && booking.status === "confirmed" && !booking.job_started;
+          const showJobStarted = role === "provider" && booking.status === "confirmed" && booking.job_started;
+          const isInteractive = showPinInput || showJobStarted;
           return (
             <motion.div
               key={booking.id}
@@ -132,8 +148,8 @@ export function BookingHistory({ role }: BookingHistoryProps) {
               transition={{ delay: i * 0.03 }}
             >
               <div
-                className={`p-3 rounded-lg border transition-colors ${showPinInput ? "" : "hover:bg-accent/50 cursor-pointer"}`}
-                onClick={() => !showPinInput && navigate(`/booking/${booking.request_id}`)}
+                className={`p-3 rounded-lg border transition-colors ${isInteractive ? "" : "hover:bg-accent/50 cursor-pointer"}`}
+                onClick={() => !isInteractive && navigate(`/booking/${booking.request_id}`)}
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-1 min-w-0">
@@ -174,7 +190,7 @@ export function BookingHistory({ role }: BookingHistoryProps) {
                       )}
                     </div>
                   </div>
-                  {!showPinInput && (
+                  {!isInteractive && (
                     <ChevronRight className="h-4 w-4 text-muted-foreground/30 shrink-0" />
                   )}
                 </div>
@@ -215,6 +231,53 @@ export function BookingHistory({ role }: BookingHistoryProps) {
                         className="text-xs"
                       >
                         Details
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Provider: Job started — show customer info & mark complete */}
+                {showJobStarted && (
+                  <div className="mt-3 pt-3 border-t border-border space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-success font-medium">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Job in progress — Precise location revealed
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {booking.otherPartyName}
+                      </span>
+                      {req?.location_name && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {req.location_name}
+                        </span>
+                      )}
+                      {booking.final_price_chf && (
+                        <span className="font-medium">CHF {Number(booking.final_price_chf).toFixed(0)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleMarkComplete(booking); }}
+                        disabled={completingId === booking.id}
+                        className="rounded-xl"
+                      >
+                        {completingId === booking.id ? (
+                          <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />Completing</>
+                        ) : (
+                          <><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Mark Complete</>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/booking/${booking.request_id}`); }}
+                        className="text-xs"
+                      >
+                        Full Details
                       </Button>
                     </div>
                   </div>
