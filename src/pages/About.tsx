@@ -81,9 +81,6 @@ export default function About() {
           <div className="absolute bottom-10 right-20 h-96 w-96 rounded-full bg-white blur-3xl" />
         </div>
         <div className="container relative max-w-5xl text-center">
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
-            <SlideBadge number={1} color="bg-white/20" />
-          </motion.div>
           <motion.h1
             className="mt-6 font-heading text-5xl font-bold text-primary-foreground md:text-7xl lg:text-8xl"
             initial="hidden"
