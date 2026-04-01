@@ -21,6 +21,7 @@ import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
 import { ServiceMap } from "@/components/ServiceMap";
 import { RaiseTicket } from "@/components/RaiseTicket";
 import { BookingHistory } from "@/components/BookingHistory";
+import { TransactionHistory } from "@/components/TransactionHistory";
 import { SERVICE_CATEGORIES, getCategoryById } from "@/lib/categories";
 import { LOCATIONS, CITIES, getLocationsByCity, getCityFromCoords } from "@/lib/locations";
 import type { ServiceRequest } from "@/lib/types";
