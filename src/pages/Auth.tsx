@@ -26,6 +26,7 @@ export default function Auth() {
   const [serviceCategory, setServiceCategory] = useState("haircut");
   const [providerType, setProviderType] = useState("individual");
   const [locationIdx, setLocationIdx] = useState("0");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
