@@ -205,18 +205,24 @@ export default function About() {
           {uniqueFeatures.map((f, i) => (
             <motion.div
               key={i}
-              className="flex items-center gap-5 rounded-xl border bg-card p-5 shadow-sm"
+              className={`flex items-center gap-5 rounded-xl border p-5 shadow-sm ${
+                (f as any).highlight
+                  ? "bg-primary/5 border-primary/30 ring-1 ring-primary/10"
+                  : "bg-card"
+              }`}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeUp}
               custom={i}
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-600/10">
-                <f.icon className="h-6 w-6 text-purple-600" />
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+                (f as any).highlight ? "bg-primary/15" : "bg-purple-600/10"
+              }`}>
+                <f.icon className={`h-6 w-6 ${(f as any).highlight ? "text-primary" : "text-purple-600"}`} />
               </div>
               <div>
-                <h3 className="text-lg font-bold">{f.label}</h3>
+                <h3 className={`text-lg font-bold ${(f as any).highlight ? "text-primary" : ""}`}>{f.label}</h3>
                 <p className="text-sm text-muted-foreground">{f.desc}</p>
               </div>
             </motion.div>
