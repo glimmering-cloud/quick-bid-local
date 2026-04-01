@@ -274,7 +274,8 @@ export function BookingHistory({ role }: BookingHistoryProps) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/booking/${booking.request_id}`); }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); navigate(`/booking/${booking.request_id}`); }}
                         className="text-xs"
                       >
                         Full Details
