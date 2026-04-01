@@ -39,22 +39,22 @@ export default function About() {
     { icon: Users, text: "Providers have idle time with no way to find nearby demand" },
     { icon: Eye, text: "Users can't find instant availability — only static listings" },
     { icon: Globe, text: "Existing platforms require tedious manual searching & comparing" },
-    { icon: Clock, text: "Demand and supply are not connected in real time" },
+    { icon: Clock, text: "Real-time demand and supply remain disconnected — no live bidding exists" },
   ];
 
   const uniqueFeatures = [
-    { icon: Repeat, label: "Reverse marketplace", desc: "Demand drives supply — not the other way around" },
-    { icon: Zap, label: "Real-time bidding", desc: "Live competitive bids, not static price lists" },
-    { icon: Brain, label: "AI-powered parsing", desc: "Natural language → structured service request" },
-    { icon: BarChart3, label: "Smart ranking", desc: "Price + distance + rating + speed = best match" },
-    { icon: Flame, label: "Demand heatmap", desc: "Pricing insights and demand visualization" },
+    { icon: Zap, label: "⚡ Real-Time Bidding", desc: "Providers compete live with price + ETA — no static listings, no waiting. Bids stream in within seconds of a request.", highlight: true },
+    { icon: Brain, label: "🤖 AI-Powered Intelligence", desc: "Natural language parsing turns 'I need a plumber near Zurich at 4 PM' into a structured request. AI ranks bids using price, distance, rating & speed.", highlight: true },
+    { icon: Scaling, label: "🔧 Multi-Service Scalability", desc: "From barbers to plumbers to AC repair — one platform scales across all local service categories with zero config changes.", highlight: true },
+    { icon: Repeat, label: "Reverse marketplace", desc: "Demand drives supply — users broadcast needs, providers come to them" },
+    { icon: Flame, label: "Demand heatmap", desc: "Pricing insights and demand visualization for providers" },
   ];
 
   const techStack = [
     { icon: Code, label: "React + TypeScript", desc: "Modern, type-safe frontend" },
     { icon: Cloud, label: "Lovable Cloud", desc: "Managed backend, auth, database" },
-    { icon: Cpu, label: "AI Integration", desc: "NLP request parsing & smart ranking" },
-    { icon: Map, label: "Leaflet Maps", desc: "Location-based provider matching" },
+    { icon: Cpu, label: "AI Integration", desc: "NLP parsing via edge functions + smart ranking algorithm" },
+    { icon: Map, label: "Leaflet Maps", desc: "Geo-based provider matching with radius search" },
   ];
 
   const impacts = [
@@ -107,7 +107,7 @@ export default function About() {
             variants={fadeUp}
             custom={2}
           >
-            Real-Time Marketplace for Local Services
+            Real-Time Bidding Marketplace for Local Services
           </motion.p>
           <motion.p
             className="mx-auto mt-6 max-w-lg text-lg text-primary-foreground/60"
@@ -116,7 +116,7 @@ export default function About() {
             variants={fadeUp}
             custom={3}
           >
-            Post a request. Get instant bids. Choose the best.
+            Post a request. AI matches providers. Get live bids. Choose the best — across any service category.
           </motion.p>
           <motion.div
             className="mt-10 flex justify-center gap-4"
@@ -193,13 +193,6 @@ export default function About() {
             </motion.div>
           ))}
         </div>
-        <div className="mt-12 text-center">
-          <Link to="/auth">
-            <Button size="lg" className="gap-2">
-              👉 Try the Live Demo <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
       </Section>
 
       {/* What Makes Us Unique */}
@@ -212,18 +205,24 @@ export default function About() {
           {uniqueFeatures.map((f, i) => (
             <motion.div
               key={i}
-              className="flex items-center gap-5 rounded-xl border bg-card p-5 shadow-sm"
+              className={`flex items-center gap-5 rounded-xl border p-5 shadow-sm ${
+                (f as any).highlight
+                  ? "bg-primary/5 border-primary/30 ring-1 ring-primary/10"
+                  : "bg-card"
+              }`}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               variants={fadeUp}
               custom={i}
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-600/10">
-                <f.icon className="h-6 w-6 text-purple-600" />
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+                (f as any).highlight ? "bg-primary/15" : "bg-purple-600/10"
+              }`}>
+                <f.icon className={`h-6 w-6 ${(f as any).highlight ? "text-primary" : "text-purple-600"}`} />
               </div>
               <div>
-                <h3 className="text-lg font-bold">{f.label}</h3>
+                <h3 className={`text-lg font-bold ${(f as any).highlight ? "text-primary" : ""}`}>{f.label}</h3>
                 <p className="text-sm text-muted-foreground">{f.desc}</p>
               </div>
             </motion.div>
@@ -364,13 +363,9 @@ export default function About() {
               </motion.div>
             ))}
           </div>
-          <div className="mt-12">
-            <Link to="/auth">
-              <Button size="lg" variant="secondary" className="gap-2 text-base">
-                Experience QuickServe <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
+          <p className="mt-10 text-primary-foreground/60 text-lg italic">
+            Built with ❤️ at GenAI Zurich Hackathon 2026
+          </p>
         </div>
       </section>
     </div>
