@@ -126,7 +126,7 @@ export default function About() {
 
       {/* Problem */}
       <Section id="problem">
-        <SlideBadge number={2} color="bg-destructive" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">
           Local services are <span className="text-destructive">inefficient</span>
         </h2>
