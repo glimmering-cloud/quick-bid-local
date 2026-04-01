@@ -34,6 +34,11 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
+      if (isSignUp && !agreedToTerms) {
+        toast.error(t("gdpr.consentRequired"));
+        setLoading(false);
+        return;
+      }
       if (isSignUp) {
         const providerInfo = role === "provider" ? {
           businessName: businessName || displayName,
