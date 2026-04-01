@@ -299,6 +299,18 @@ export default function RequestDetail() {
           </CardContent>
         </Card>
       )}
+      {/* Payment Gateway - shown when customer accepts a bid */}
+      {pendingBid && request && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <DemoPaymentGateway
+            amount={Number(pendingBid.price)}
+            serviceName={request.title}
+            providerName={pendingBid.provider?.business_name || pendingBid.profiles?.display_name || "Provider"}
+            onPaymentSuccess={handlePaymentSuccess}
+            onCancel={() => setPendingBid(null)}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }
