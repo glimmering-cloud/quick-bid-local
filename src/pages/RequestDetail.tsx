@@ -13,6 +13,7 @@ import { ServiceMap } from "@/components/ServiceMap";
 import { BidRankingCard } from "@/components/BidRankingCard";
 import { LiveBiddingIndicator } from "@/components/LiveBiddingIndicator";
 import { PriceSuggestion } from "@/components/PriceSuggestion";
+import { DemoPaymentGateway } from "@/components/DemoPaymentGateway";
 import { rankBids } from "@/lib/ranking";
 import { getCategoryById } from "@/lib/categories";
 import type { ServiceRequest, Bid, Profile } from "@/lib/types";
@@ -34,6 +35,7 @@ export default function RequestDetail() {
   const [estimatedWait, setEstimatedWait] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pendingBid, setPendingBid] = useState<BidWithProfile | null>(null);
 
   const isCustomer = request?.customer_id === user?.id;
   const isProvider = profile?.role === "provider";
@@ -120,9 +122,17 @@ export default function RequestDetail() {
 
   const handleAcceptBid = async (bid: BidWithProfile) => {
     if (!user || !request) return;
+    // Show payment gateway instead of immediately creating booking
+    setPendingBid(bid);
+  };
+
+  const handlePaymentSuccess = async (txnId: string) => {
+    if (!user || !request || !pendingBid) return;
+
+    const bid = pendingBid;
 
     const { error: acceptError } = await supabase.from("bids").update({ status: "accepted" as any }).eq("id", bid.id);
-    if (acceptError) { toast.error(acceptError.message); return; }
+    if (acceptError) { toast.error(acceptError.message); setPendingBid(null); return; }
 
     const { error: bookingError } = await supabase.from("bookings").insert({
       request_id: request.id, bid_id: bid.id, customer_id: user.id, provider_id: bid.provider_id, final_price_chf: Number(bid.price),
@@ -131,6 +141,7 @@ export default function RequestDetail() {
     if (bookingError) {
       await supabase.from("bids").update({ status: "pending" as any }).eq("id", bid.id);
       toast.error(bookingError.message);
+      setPendingBid(null);
       return;
     }
 
@@ -287,6 +298,18 @@ export default function RequestDetail() {
             <p className="text-sm font-medium text-primary">✓ {t("request.alreadyBid")}</p>
           </CardContent>
         </Card>
+      )}
+      {/* Payment Gateway - shown when customer accepts a bid */}
+      {pendingBid && request && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <DemoPaymentGateway
+            amount={Number(pendingBid.price)}
+            serviceName={request.title}
+            providerName={pendingBid.provider?.business_name || pendingBid.profiles?.display_name || "Provider"}
+            onPaymentSuccess={handlePaymentSuccess}
+            onCancel={() => setPendingBid(null)}
+          />
+        </div>
       )}
     </motion.div>
   );
