@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { Moon, Sun, User, Shield, Save, Loader2, Trash2, Lock, Globe, Bell } from "lucide-react";
 import { SavedPaymentMethods } from "@/components/SavedPaymentMethods";
+import { DataExport } from "@/components/DataExport";
 import { motion } from "framer-motion";
 
 export default function Settings() {
