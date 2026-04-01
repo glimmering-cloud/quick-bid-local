@@ -46,10 +46,16 @@ Deno.serve(async (req) => {
 
     // Delete related data in order (respecting foreign keys)
     await supabaseAdmin.from("notifications").delete().eq("user_id", userId);
+    await supabaseAdmin.from("reviews").delete().or(`reviewer_id.eq.${userId},reviewee_id.eq.${userId}`);
+    await supabaseAdmin.from("transactions").delete().or(`customer_id.eq.${userId},provider_id.eq.${userId}`);
+    await supabaseAdmin.from("complaints").delete().eq("reporter_id", userId);
     await supabaseAdmin.from("bookings").delete().or(`customer_id.eq.${userId},provider_id.eq.${userId}`);
     await supabaseAdmin.from("bids").delete().eq("provider_id", userId);
     await supabaseAdmin.from("service_requests").delete().eq("customer_id", userId);
+    await supabaseAdmin.from("platform_fees").delete().eq("provider_id", userId);
+    await supabaseAdmin.from("saved_payment_methods").delete().eq("user_id", userId);
     await supabaseAdmin.from("providers").delete().eq("user_id", userId);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
     await supabaseAdmin.from("profiles").delete().eq("user_id", userId);
 
     // Delete the auth user
