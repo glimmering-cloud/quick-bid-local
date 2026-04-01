@@ -375,4 +375,16 @@ export default {
     payNow: "Pay Now",
     paid: "Paid",
   },
+  gdpr: {
+    consentLabel: "I agree to the",
+    privacyPolicy: "Privacy Policy",
+    and: "and",
+    termsOfService: "Terms of Service",
+    consentRequired: "You must agree to the Privacy Policy and Terms of Service",
+    dataPortability: "Export My Data",
+    dataPortabilityDesc: "Download all your personal data in JSON format (GDPR Art. 20 — Right to Data Portability).",
+    exportData: "Download My Data",
+    exporting: "Exporting...",
+    exportSuccess: "Your data has been exported successfully",
+  },
 };

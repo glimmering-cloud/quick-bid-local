@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export default function Auth() {
   const [serviceCategory, setServiceCategory] = useState("haircut");
   const [providerType, setProviderType] = useState("individual");
   const [locationIdx, setLocationIdx] = useState("0");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -33,6 +34,11 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
+      if (isSignUp && !agreedToTerms) {
+        toast.error(t("gdpr.consentRequired"));
+        setLoading(false);
+        return;
+      }
       if (isSignUp) {
         const providerInfo = role === "provider" ? {
           businessName: businessName || displayName,
@@ -212,6 +218,23 @@ export default function Auth() {
                   minLength={6}
                 />
               </div>
+              {isSignUp && (
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="gdpr-consent"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="gdpr-consent" className="text-xs text-muted-foreground leading-relaxed">
+                    {t("gdpr.consentLabel")}{" "}
+                    <Link to="/privacy" className="underline text-primary hover:text-primary/80">{t("gdpr.privacyPolicy")}</Link>
+                    {" "}{t("gdpr.and")}{" "}
+                    <Link to="/terms" className="underline text-primary hover:text-primary/80">{t("gdpr.termsOfService")}</Link>
+                  </label>
+                </div>
+              )}
               <Button type="submit" className="w-full h-11 rounded-xl" disabled={loading}>
                 {loading ? (
                   <>
