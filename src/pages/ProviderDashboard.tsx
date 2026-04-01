@@ -59,8 +59,28 @@ export default function ProviderDashboard() {
 
   const loadData = async () => {
     if (!user) return;
+
+    // Fetch provider's service category to filter requests
+    const { data: providerData } = await supabase
+      .from("providers")
+      .select("service_category")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const myCategory = providerData?.service_category;
+
+    let reqQuery = supabase
+      .from("service_requests")
+      .select("*")
+      .in("status", ["open", "bidding"])
+      .order("created_at", { ascending: false });
+
+    if (myCategory) {
+      reqQuery = reqQuery.eq("category", myCategory);
+    }
+
     const [{ data: reqs }, { data: bids }] = await Promise.all([
-      supabase.from("service_requests").select("*").in("status", ["open", "bidding"]).order("created_at", { ascending: false }),
+      reqQuery,
       supabase.from("bids").select("request_id").eq("provider_id", user.id),
     ]);
     const rawReqs = reqs || [];
