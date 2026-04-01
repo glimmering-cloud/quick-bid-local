@@ -46,7 +46,7 @@ export function TransactionHistory({ role }: TransactionHistoryProps) {
       .select("*")
       .eq(col, user.id)
       .order("created_at", { ascending: false });
-    setTransactions((data as Transaction[]) || []);
+    setTransactions(((data as unknown) as Transaction[]) || []);
     setLoading(false);
   };
 

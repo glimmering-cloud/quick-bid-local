@@ -306,6 +306,8 @@ export default function RequestDetail() {
             amount={Number(pendingBid.price)}
             serviceName={request.title}
             providerName={pendingBid.provider?.business_name || pendingBid.profiles?.display_name || "Provider"}
+            requestId={request.id}
+            providerId={pendingBid.provider_id}
             onPaymentSuccess={handlePaymentSuccess}
             onCancel={() => setPendingBid(null)}
           />
