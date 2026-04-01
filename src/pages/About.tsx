@@ -328,7 +328,7 @@ export default function About() {
           <div className="absolute bottom-20 left-20 h-64 w-64 rounded-full bg-white blur-3xl" />
         </div>
         <div className="container relative max-w-4xl text-center">
-          <SlideBadge number={8} color="bg-white/20" />
+          
           <h2 className="mt-6 font-heading text-3xl font-bold text-primary-foreground md:text-5xl">
             The future of local services is real-time
           </h2>
