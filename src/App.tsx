@@ -17,6 +17,7 @@ import ManagementDashboard from "./pages/ManagementDashboard";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
