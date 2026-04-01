@@ -25,6 +25,7 @@ export function BookingHistory({ role }: BookingHistoryProps) {
   const [loading, setLoading] = useState(true);
   const [pinInputs, setPinInputs] = useState<Record<string, string>>({});
   const [verifying, setVerifying] = useState<string | null>(null);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
