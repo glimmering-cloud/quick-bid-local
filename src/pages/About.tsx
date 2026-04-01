@@ -193,13 +193,6 @@ export default function About() {
             </motion.div>
           ))}
         </div>
-        <div className="mt-12 text-center">
-          <Link to="/auth">
-            <Button size="lg" className="gap-2">
-              👉 Try the Live Demo <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
       </Section>
 
       {/* What Makes Us Unique */}
