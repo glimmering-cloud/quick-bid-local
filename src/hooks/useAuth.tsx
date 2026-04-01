@@ -3,12 +3,19 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Profile } from "@/lib/types";
 
+interface ProviderInfo {
+  businessName: string;
+  serviceCategory: string;
+  providerType: string;
+  location: { name: string; lat: number; lng: number; city: string };
+}
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName: string, role: "customer" | "provider") => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, role: "customer" | "provider", providerInfo?: ProviderInfo) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
@@ -57,8 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, displayName: string, role: "customer" | "provider") => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, displayName: string, role: "customer" | "provider", providerInfo?: ProviderInfo) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -68,7 +75,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
 
-    // Profile is now auto-created by the trigger with the correct role from metadata
+    // The trigger should create the profile, but as a safety net wait and check
+    if (data?.user) {
+      // Small delay for trigger to fire
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Check if profile was created by trigger
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      // If trigger didn't create profile, create it manually
+      if (!existingProfile) {
+        await supabase.from("profiles").insert({
+          user_id: data.user.id,
+          display_name: displayName,
+          role,
+          location_lat: providerInfo?.location.lat ?? null,
+          location_lng: providerInfo?.location.lng ?? null,
+          location_name: providerInfo?.location.name ?? null,
+        });
+      } else if (providerInfo) {
+        // Update profile with location if provider
+        await supabase.from("profiles").update({
+          location_lat: providerInfo.location.lat,
+          location_lng: providerInfo.location.lng,
+          location_name: providerInfo.location.name,
+        }).eq("user_id", data.user.id);
+      }
+
+      // Create provider record if provider role
+      if (role === "provider" && providerInfo) {
+        await supabase.from("providers").insert({
+          user_id: data.user.id,
+          business_name: providerInfo.businessName || displayName,
+          service_category: providerInfo.serviceCategory,
+          provider_type: providerInfo.providerType,
+          latitude: providerInfo.location.lat,
+          longitude: providerInfo.location.lng,
+          base_price_chf: 0,
+          rating: 0,
+        });
+      }
+    }
   };
 
   const signIn = async (email: string, password: string) => {

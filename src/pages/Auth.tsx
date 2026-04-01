@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, User, Briefcase, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Zap, User, Briefcase, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { SERVICE_CATEGORIES } from "@/lib/categories";
+import { LOCATIONS } from "@/lib/locations";
 
 export default function Auth() {
   const { t } = useTranslation();
@@ -18,6 +21,11 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<"customer" | "provider">("customer");
   const [loading, setLoading] = useState(false);
+  // Provider-specific fields
+  const [businessName, setBusinessName] = useState("");
+  const [serviceCategory, setServiceCategory] = useState("haircut");
+  const [providerType, setProviderType] = useState("individual");
+  const [locationIdx, setLocationIdx] = useState("0");
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -26,7 +34,13 @@ export default function Auth() {
     setLoading(true);
     try {
       if (isSignUp) {
-        await signUp(email, password, displayName, role);
+        const providerInfo = role === "provider" ? {
+          businessName: businessName || displayName,
+          serviceCategory,
+          providerType,
+          location: LOCATIONS[parseInt(locationIdx)] || LOCATIONS[0],
+        } : undefined;
+        await signUp(email, password, displayName, role, providerInfo);
         toast.success(t("auth.accountCreated"));
       } else {
         await signIn(email, password);
@@ -104,6 +118,75 @@ export default function Auth() {
                       ))}
                     </div>
                   </div>
+
+                  {role === "provider" && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-3 rounded-xl border border-primary/20 bg-primary/5 p-4"
+                    >
+                      <p className="text-xs font-medium text-primary flex items-center gap-1.5">
+                        <Briefcase className="h-3.5 w-3.5" />
+                        Provider Details
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="bizName">Business Name</Label>
+                        <Input
+                          id="bizName"
+                          value={businessName}
+                          onChange={(e) => setBusinessName(e.target.value)}
+                          placeholder="e.g. Marco's Barbershop"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Service Category</Label>
+                        <Select value={serviceCategory} onValueChange={setServiceCategory}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SERVICE_CATEGORIES.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.emoji} {cat.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Provider Type</Label>
+                        <Select value={providerType} onValueChange={setProviderType}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="individual">Individual</SelectItem>
+                            <SelectItem value="company">Company</SelectItem>
+                            <SelectItem value="agency">Agency</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          Location
+                        </Label>
+                        <Select value={locationIdx} onValueChange={setLocationIdx}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            {LOCATIONS.map((loc, i) => (
+                              <SelectItem key={i} value={String(i)}>
+                                {loc.name} ({loc.city})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </motion.div>
+                  )}
                 </motion.div>
               )}
               <div className="space-y-2">
