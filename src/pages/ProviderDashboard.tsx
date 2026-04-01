@@ -87,7 +87,23 @@ export default function ProviderDashboard() {
       reqQuery,
       supabase.from("bids").select("request_id").eq("provider_id", user.id),
     ]);
-    const rawReqs = reqs || [];
+
+    // Client-side distance filter: show requests within 35km if provider has coords
+    let filteredReqs = reqs || [];
+    if (providerData?.latitude && providerData?.longitude) {
+      const R = 6371;
+      filteredReqs = filteredReqs.filter(r => {
+        const dLat = (r.location_lat - providerData.latitude!) * Math.PI / 180;
+        const dLng = (r.location_lng - providerData.longitude!) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 +
+          Math.cos(providerData.latitude! * Math.PI / 180) * Math.cos(r.location_lat * Math.PI / 180) *
+          Math.sin(dLng / 2) ** 2;
+        const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return d <= 35;
+      });
+    }
+
+    const rawReqs = filteredReqs;
     if (rawReqs.length > 0) {
       const customerIds = [...new Set(rawReqs.map(r => r.customer_id))];
       const { data: profiles } = await supabase.from("public_profiles").select("user_id, display_name").in("user_id", customerIds);
