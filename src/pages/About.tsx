@@ -107,7 +107,7 @@ export default function About() {
             variants={fadeUp}
             custom={2}
           >
-            Real-Time Marketplace for Local Services
+            Real-Time Bidding Marketplace for Local Services
           </motion.p>
           <motion.p
             className="mx-auto mt-6 max-w-lg text-lg text-primary-foreground/60"
@@ -116,7 +116,7 @@ export default function About() {
             variants={fadeUp}
             custom={3}
           >
-            Post a request. Get instant bids. Choose the best.
+            Post a request. AI matches providers. Get live bids. Choose the best — across any service category.
           </motion.p>
           <motion.div
             className="mt-10 flex justify-center gap-4"
