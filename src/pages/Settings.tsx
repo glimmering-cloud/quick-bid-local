@@ -247,6 +247,9 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      {/* Payment Methods */}
+      <SavedPaymentMethods />
+
       {/* Appearance */}
       <Card className="shadow-sm">
         <CardHeader>
