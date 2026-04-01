@@ -26,15 +26,24 @@ interface DemoPaymentGatewayProps {
   currency?: string;
   serviceName: string;
   providerName: string;
+  bookingId?: string;
+  requestId?: string;
+  providerId?: string;
   onPaymentSuccess: (transactionId: string) => void;
   onCancel?: () => void;
 }
+
+const CONVENIENCE_FEE_PCT = 2;
+const BANK_CHARGE_RATE = 0.5; // 0.5% demo bank charges
 
 export function DemoPaymentGateway({
   amount,
   currency = "CHF",
   serviceName,
   providerName,
+  bookingId,
+  requestId,
+  providerId,
   onPaymentSuccess,
   onCancel,
 }: DemoPaymentGatewayProps) {
@@ -49,6 +58,13 @@ export function DemoPaymentGateway({
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [selectedSavedCard, setSelectedSavedCard] = useState<string | null>(null);
 
+  // Fee calculations
+  const serviceAmount = amount;
+  const convenienceFee = parseFloat((serviceAmount * CONVENIENCE_FEE_PCT / 100).toFixed(2));
+  const bankCharges = parseFloat((serviceAmount * BANK_CHARGE_RATE / 100).toFixed(2));
+  const totalCharged = parseFloat((serviceAmount + convenienceFee + bankCharges).toFixed(2));
+  const providerPayout = parseFloat((serviceAmount - bankCharges).toFixed(2));
+
   useEffect(() => {
     if (user) loadSavedCards();
   }, [user]);
@@ -61,7 +77,6 @@ export function DemoPaymentGateway({
       .order("is_default", { ascending: false });
     const cards = (data as SavedCard[]) || [];
     setSavedCards(cards);
-    // Auto-select default card
     const def = cards.find(c => c.is_default);
     if (def) setSelectedSavedCard(def.id);
   };
@@ -115,16 +130,41 @@ export function DemoPaymentGateway({
       } as any);
     }
 
-    const txnId = `TXN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const txnRef = `TXN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+    // Record transaction
+    if (user && bookingId && requestId && providerId) {
+      const selectedCard = savedCards.find(c => c.id === selectedSavedCard);
+      const paymentMethod = selectedCard
+        ? `${selectedCard.card_brand} ••${selectedCard.card_last_four}`
+        : `${detectBrand(cardNumber)} ••${cardNumber.replace(/\s/g, "").slice(-4)}`;
+
+      await supabase.from("transactions" as any).insert({
+        booking_id: bookingId,
+        request_id: requestId,
+        customer_id: user.id,
+        provider_id: providerId,
+        service_amount: serviceAmount,
+        convenience_fee_pct: CONVENIENCE_FEE_PCT,
+        convenience_fee: convenienceFee,
+        bank_charges: bankCharges,
+        total_charged: totalCharged,
+        provider_payout: providerPayout,
+        transaction_ref: txnRef,
+        payment_method: paymentMethod,
+        status: "completed",
+        currency,
+      });
+    }
+
     setStep("success");
 
     setTimeout(() => {
-      onPaymentSuccess(txnId);
+      onPaymentSuccess(txnRef);
     }, 1500);
   };
 
   const usingSavedCard = !!selectedSavedCard;
-  const selectedCard = savedCards.find(c => c.id === selectedSavedCard);
 
   return (
     <Card className="border-primary/20 shadow-lg max-w-md mx-auto overflow-hidden">
@@ -149,7 +189,7 @@ export function DemoPaymentGateway({
               onSubmit={handleSubmit}
               className="space-y-4"
             >
-              {/* Order summary */}
+              {/* Order summary with fee breakdown */}
               <div className="rounded-lg bg-muted/50 p-3 space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{t("payment.service", "Service")}</span>
@@ -160,12 +200,31 @@ export function DemoPaymentGateway({
                   <span className="font-medium">{providerName}</span>
                 </div>
                 <div className="h-px bg-border my-1" />
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Service Amount</span>
+                  <span>{currency} {serviceAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Convenience Fee ({CONVENIENCE_FEE_PCT}%)</span>
+                  <span>{currency} {convenienceFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Bank/Transaction Charges</span>
+                  <span>{currency} {bankCharges.toFixed(2)}</span>
+                </div>
+                <div className="h-px bg-border my-1" />
                 <div className="flex justify-between">
                   <span className="font-medium">{t("payment.total", "Total")}</span>
                   <span className="font-heading text-xl font-bold text-primary">
-                    {currency} {amount.toFixed(2)}
+                    {currency} {totalCharged.toFixed(2)}
                   </span>
                 </div>
+              </div>
+
+              {/* Provider payout info */}
+              <div className="rounded-lg border border-success/20 bg-success/5 p-2.5 text-xs text-success flex justify-between items-center">
+                <span>Provider receives</span>
+                <span className="font-semibold">{currency} {providerPayout.toFixed(2)}</span>
               </div>
 
               {/* Saved cards */}
@@ -215,7 +274,7 @@ export function DemoPaymentGateway({
                 {t("payment.demoNotice", "Demo mode — no real charges. Use any card number.")}
               </div>
 
-              {/* New card form - hidden when using saved card */}
+              {/* New card form */}
               {!usingSavedCard && (
                 <>
                   <div className="space-y-2">
@@ -228,7 +287,6 @@ export function DemoPaymentGateway({
                       required={!usingSavedCard}
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label>{t("payment.cardHolder", "Cardholder Name")}</Label>
                     <Input
@@ -238,7 +296,6 @@ export function DemoPaymentGateway({
                       required={!usingSavedCard}
                     />
                   </div>
-
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label>{t("payment.expiry", "Expiry")}</Label>
@@ -262,8 +319,6 @@ export function DemoPaymentGateway({
                       />
                     </div>
                   </div>
-
-                  {/* Save card checkbox */}
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="save-card"
@@ -280,7 +335,7 @@ export function DemoPaymentGateway({
               <div className="flex gap-2 pt-2">
                 <Button type="submit" className="flex-1 rounded-xl gap-2">
                   <Lock className="h-4 w-4" />
-                  {t("payment.pay", "Pay")} {currency} {amount.toFixed(2)}
+                  {t("payment.pay", "Pay")} {currency} {totalCharged.toFixed(2)}
                 </Button>
                 {onCancel && (
                   <Button type="button" variant="ghost" onClick={onCancel}>
@@ -289,15 +344,8 @@ export function DemoPaymentGateway({
                 )}
               </div>
 
-              {/* Accepted cards */}
               <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground pt-1">
-                <span>Visa</span>
-                <span>•</span>
-                <span>Mastercard</span>
-                <span>•</span>
-                <span>Amex</span>
-                <span>•</span>
-                <span>TWINT</span>
+                <span>Visa</span><span>•</span><span>Mastercard</span><span>•</span><span>Amex</span><span>•</span><span>TWINT</span>
               </div>
             </motion.form>
           )}
@@ -333,7 +381,7 @@ export function DemoPaymentGateway({
               </motion.div>
               <p className="font-heading font-bold text-xl">{t("payment.success", "Payment Successful!")}</p>
               <p className="text-sm text-muted-foreground">
-                {currency} {amount.toFixed(2)} • {providerName}
+                {currency} {totalCharged.toFixed(2)} • {providerName}
               </p>
             </motion.div>
           )}
