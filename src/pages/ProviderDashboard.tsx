@@ -10,6 +10,7 @@ import { getCategoryById } from "@/lib/categories";
 import { getCityFromCoords, getLocationNamesForCity } from "@/lib/locations";
 import { BookingHistory } from "@/components/BookingHistory";
 import { TransactionHistory } from "@/components/TransactionHistory";
+import { ProviderPlatformFees } from "@/components/ProviderPlatformFees";
 import type { ServiceRequest } from "@/lib/types";
 import { RaiseTicket } from "@/components/RaiseTicket";
 import { format } from "date-fns";
