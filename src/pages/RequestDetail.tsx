@@ -122,9 +122,17 @@ export default function RequestDetail() {
 
   const handleAcceptBid = async (bid: BidWithProfile) => {
     if (!user || !request) return;
+    // Show payment gateway instead of immediately creating booking
+    setPendingBid(bid);
+  };
+
+  const handlePaymentSuccess = async (txnId: string) => {
+    if (!user || !request || !pendingBid) return;
+
+    const bid = pendingBid;
 
     const { error: acceptError } = await supabase.from("bids").update({ status: "accepted" as any }).eq("id", bid.id);
-    if (acceptError) { toast.error(acceptError.message); return; }
+    if (acceptError) { toast.error(acceptError.message); setPendingBid(null); return; }
 
     const { error: bookingError } = await supabase.from("bookings").insert({
       request_id: request.id, bid_id: bid.id, customer_id: user.id, provider_id: bid.provider_id, final_price_chf: Number(bid.price),
@@ -133,6 +141,7 @@ export default function RequestDetail() {
     if (bookingError) {
       await supabase.from("bids").update({ status: "pending" as any }).eq("id", bid.id);
       toast.error(bookingError.message);
+      setPendingBid(null);
       return;
     }
 
