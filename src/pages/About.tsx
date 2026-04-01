@@ -26,13 +26,6 @@ const Section = ({
   </section>
 );
 
-const SlideBadge = ({ number, color }: { number: number; color: string }) => (
-  <span
-    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ${color}`}
-  >
-    Slide {number}
-  </span>
-);
 
 export default function About() {
   const problems = [
