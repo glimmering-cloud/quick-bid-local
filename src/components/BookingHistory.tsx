@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
-import { History, MapPin, Clock, Star, ChevronRight, ShieldCheck, Loader2 } from "lucide-react";
+import { History, MapPin, Clock, Star, ChevronRight, ShieldCheck, Loader2, CheckCircle2, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
