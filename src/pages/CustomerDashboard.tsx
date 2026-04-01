@@ -29,7 +29,7 @@ import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CustomerDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -42,6 +42,11 @@ export default function CustomerDashboard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("haircut");
+
+  // Determine customer's city from their profile location
+  const userCity = profile?.location_lat && profile?.location_lng
+    ? getCityFromCoords(profile.location_lat, profile.location_lng)
+    : null;
   const [selectedCity, setSelectedCity] = useState(CITIES[0]);
   const [locationIdx, setLocationIdx] = useState(0);
   const [requestedTime, setRequestedTime] = useState("");
@@ -49,6 +54,14 @@ export default function CustomerDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [providers, setProviders] = useState<any[]>([]);
   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
+
+  // Lock city to user's profile city once known
+  useEffect(() => {
+    if (userCity) {
+      setSelectedCity(userCity);
+      setLocationIdx(0);
+    }
+  }, [userCity]);
 
   const cityLocations = getLocationsByCity(selectedCity);
   const allLocations = LOCATIONS;
