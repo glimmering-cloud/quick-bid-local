@@ -99,6 +99,19 @@ export function BookingHistory({ role }: BookingHistoryProps) {
     setVerifying(null);
   };
 
+  const handleMarkComplete = async (booking: any) => {
+    setCompletingId(booking.id);
+    const { error } = await supabase.from("bookings").update({ status: "completed" as any }).eq("id", booking.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      await supabase.from("service_requests").update({ status: "completed" as any }).eq("id", booking.request_id);
+      toast.success("Job marked as complete!");
+      loadBookings();
+    }
+    setCompletingId(null);
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
       case "confirmed": return "bg-primary/10 text-primary border-primary/20";
