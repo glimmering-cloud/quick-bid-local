@@ -152,7 +152,7 @@ export default function BookingConfirmation() {
   const request = booking.service_requests;
   const isCustomer = booking.customer_id === user?.id;
   const isProvider = booking.provider_id === user?.id;
-  const cat = getCategoryById(request?.category);
+  const cat = getCategoryById(request?.category || "haircut");
   const jobStarted = booking.job_started;
 
   const statusIcon = booking.status === "completed"
