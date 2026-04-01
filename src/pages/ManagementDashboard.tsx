@@ -176,7 +176,7 @@ export default function ManagementDashboard() {
   }, [isAdmin]);
 
   const loadAnalytics = useCallback(async () => {
-    const [{ count: totalRequests }, { count: totalBookings }, { count: totalProviders }, { count: totalUsers }, { data: recentRequests }, { data: bookingsData }, { data: providersData }] = await Promise.all([
+    const [{ count: totalRequests }, { count: totalBookings }, { count: totalProviders }, { count: totalUsers }, { data: recentRequests }, { data: bookingsData }, { data: providersData }, { data: transactionsData }, { data: platformFeesData }] = await Promise.all([
       supabase.from("service_requests").select("*", { count: "exact", head: true }),
       supabase.from("bookings").select("*", { count: "exact", head: true }),
       supabase.from("providers").select("*", { count: "exact", head: true }),
@@ -184,6 +184,8 @@ export default function ManagementDashboard() {
       supabase.from("service_requests").select("category, status").limit(1000),
       supabase.from("bookings").select("status, final_price_chf").limit(1000),
       supabase.from("providers").select("service_category, provider_type, rating").limit(1000),
+      supabase.from("transactions" as any).select("service_amount, convenience_fee, bank_charges, total_charged, provider_payout").limit(1000),
+      supabase.from("platform_fees" as any).select("fee_amount, status").limit(1000),
     ]);
 
     // Category distribution
@@ -209,6 +211,18 @@ export default function ManagementDashboard() {
     const ratings = (providersData || []).map(p => Number(p.rating || 0)).filter(r => r > 0);
     const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
 
+    // Platform earnings from transactions
+    const txns = ((transactionsData as unknown) as any[]) || [];
+    const totalConvenienceFees = txns.reduce((s, t) => s + Number(t.convenience_fee || 0), 0);
+    const totalBankCharges = txns.reduce((s, t) => s + Number(t.bank_charges || 0), 0);
+    const totalTransactionVolume = txns.reduce((s, t) => s + Number(t.total_charged || 0), 0);
+    const totalProviderPayouts = txns.reduce((s, t) => s + Number(t.provider_payout || 0), 0);
+
+    // Platform fees from providers
+    const pFees = ((platformFeesData as unknown) as any[]) || [];
+    const platformFeesPaid = pFees.filter(f => f.status === "paid").reduce((s, f) => s + Number(f.fee_amount || 0), 0);
+    const platformFeesPending = pFees.filter(f => f.status === "pending").reduce((s, f) => s + Number(f.fee_amount || 0), 0);
+
     setAnalytics({
       totalRequests: totalRequests || 0,
       totalBookings: totalBookings || 0,
@@ -220,6 +234,13 @@ export default function ManagementDashboard() {
       totalRevenue,
       completedBookings,
       avgRating,
+      totalConvenienceFees,
+      totalBankCharges,
+      totalTransactionVolume,
+      totalProviderPayouts,
+      platformFeesPaid,
+      platformFeesPending,
+      totalTransactions: txns.length,
     });
   }, []);
 
