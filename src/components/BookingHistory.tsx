@@ -219,6 +219,53 @@ export function BookingHistory({ role }: BookingHistoryProps) {
                     </div>
                   </div>
                 )}
+
+                {/* Provider: Job started — show customer info & mark complete */}
+                {showJobStarted && (
+                  <div className="mt-3 pt-3 border-t border-border space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-success font-medium">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Job in progress — Precise location revealed
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {booking.otherPartyName}
+                      </span>
+                      {req?.location_name && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {req.location_name}
+                        </span>
+                      )}
+                      {booking.final_price_chf && (
+                        <span className="font-medium">CHF {Number(booking.final_price_chf).toFixed(0)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleMarkComplete(booking); }}
+                        disabled={completingId === booking.id}
+                        className="rounded-xl"
+                      >
+                        {completingId === booking.id ? (
+                          <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />Completing</>
+                        ) : (
+                          <><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Mark Complete</>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/booking/${booking.request_id}`); }}
+                        className="text-xs"
+                      >
+                        Full Details
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           );
