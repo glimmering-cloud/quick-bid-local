@@ -190,7 +190,7 @@ export function BookingHistory({ role }: BookingHistoryProps) {
                       )}
                     </div>
                   </div>
-                  {!showPinInput && (
+                  {!isInteractive && (
                     <ChevronRight className="h-4 w-4 text-muted-foreground/30 shrink-0" />
                   )}
                 </div>
