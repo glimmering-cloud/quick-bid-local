@@ -39,22 +39,22 @@ export default function About() {
     { icon: Users, text: "Providers have idle time with no way to find nearby demand" },
     { icon: Eye, text: "Users can't find instant availability — only static listings" },
     { icon: Globe, text: "Existing platforms require tedious manual searching & comparing" },
-    { icon: Clock, text: "Demand and supply are not connected in real time" },
+    { icon: Clock, text: "Real-time demand and supply remain disconnected — no live bidding exists" },
   ];
 
   const uniqueFeatures = [
-    { icon: Repeat, label: "Reverse marketplace", desc: "Demand drives supply — not the other way around" },
-    { icon: Zap, label: "Real-time bidding", desc: "Live competitive bids, not static price lists" },
-    { icon: Brain, label: "AI-powered parsing", desc: "Natural language → structured service request" },
-    { icon: BarChart3, label: "Smart ranking", desc: "Price + distance + rating + speed = best match" },
-    { icon: Flame, label: "Demand heatmap", desc: "Pricing insights and demand visualization" },
+    { icon: Zap, label: "⚡ Real-Time Bidding", desc: "Providers compete live with price + ETA — no static listings, no waiting. Bids stream in within seconds of a request.", highlight: true },
+    { icon: Brain, label: "🤖 AI-Powered Intelligence", desc: "Natural language parsing turns 'I need a plumber near Zurich at 4 PM' into a structured request. AI ranks bids using price, distance, rating & speed.", highlight: true },
+    { icon: Scaling, label: "🔧 Multi-Service Scalability", desc: "From barbers to plumbers to AC repair — one platform scales across all local service categories with zero config changes.", highlight: true },
+    { icon: Repeat, label: "Reverse marketplace", desc: "Demand drives supply — users broadcast needs, providers come to them" },
+    { icon: Flame, label: "Demand heatmap", desc: "Pricing insights and demand visualization for providers" },
   ];
 
   const techStack = [
     { icon: Code, label: "React + TypeScript", desc: "Modern, type-safe frontend" },
     { icon: Cloud, label: "Lovable Cloud", desc: "Managed backend, auth, database" },
-    { icon: Cpu, label: "AI Integration", desc: "NLP request parsing & smart ranking" },
-    { icon: Map, label: "Leaflet Maps", desc: "Location-based provider matching" },
+    { icon: Cpu, label: "AI Integration", desc: "NLP parsing via edge functions + smart ranking algorithm" },
+    { icon: Map, label: "Leaflet Maps", desc: "Geo-based provider matching with radius search" },
   ];
 
   const impacts = [
