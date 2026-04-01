@@ -1,12 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CreditCard, Lock, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+
+interface SavedCard {
+  id: string;
+  card_last_four: string;
+  card_brand: string;
+  cardholder_name: string;
+  expiry_month: number;
+  expiry_year: number;
+  is_default: boolean;
+}
 
 interface DemoPaymentGatewayProps {
   amount: number;
@@ -26,11 +39,32 @@ export function DemoPaymentGateway({
   onCancel,
 }: DemoPaymentGatewayProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [step, setStep] = useState<"form" | "processing" | "success">("form");
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvc, setCvc] = useState("");
   const [name, setName] = useState("");
+  const [saveCard, setSaveCard] = useState(false);
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [selectedSavedCard, setSelectedSavedCard] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) loadSavedCards();
+  }, [user]);
+
+  const loadSavedCards = async () => {
+    const { data } = await supabase
+      .from("saved_payment_methods")
+      .select("*")
+      .eq("user_id", user!.id)
+      .order("is_default", { ascending: false });
+    const cards = (data as SavedCard[]) || [];
+    setSavedCards(cards);
+    // Auto-select default card
+    const def = cards.find(c => c.is_default);
+    if (def) setSelectedSavedCard(def.id);
+  };
 
   const formatCardNumber = (val: string) => {
     const digits = val.replace(/\D/g, "").slice(0, 16);
@@ -43,17 +77,43 @@ export function DemoPaymentGateway({
     return digits;
   };
 
+  const detectBrand = (num: string) => {
+    const d = num.replace(/\s/g, "");
+    if (d.startsWith("4")) return "Visa";
+    if (d.startsWith("5") || d.startsWith("2")) return "Mastercard";
+    if (d.startsWith("3")) return "Amex";
+    return "Card";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const digits = cardNumber.replace(/\s/g, "");
-    if (digits.length < 16) { toast.error("Enter a valid card number"); return; }
-    if (expiry.length < 5) { toast.error("Enter a valid expiry date"); return; }
-    if (cvc.length < 3) { toast.error("Enter a valid CVC"); return; }
+
+    if (!selectedSavedCard) {
+      const digits = cardNumber.replace(/\s/g, "");
+      if (digits.length < 16) { toast.error("Enter a valid card number"); return; }
+      if (expiry.length < 5) { toast.error("Enter a valid expiry date"); return; }
+      if (cvc.length < 3) { toast.error("Enter a valid CVC"); return; }
+    }
 
     setStep("processing");
 
     // Simulate payment processing
     await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
+
+    // Save card if requested
+    if (saveCard && !selectedSavedCard && user) {
+      const digits = cardNumber.replace(/\s/g, "");
+      const expiryParts = expiry.split("/");
+      await supabase.from("saved_payment_methods").insert({
+        user_id: user.id,
+        card_last_four: digits.slice(-4),
+        card_brand: detectBrand(digits),
+        cardholder_name: name,
+        expiry_month: parseInt(expiryParts[0]),
+        expiry_year: 2000 + parseInt(expiryParts[1]),
+        is_default: savedCards.length === 0,
+      } as any);
+    }
 
     const txnId = `TXN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     setStep("success");
@@ -62,6 +122,9 @@ export function DemoPaymentGateway({
       onPaymentSuccess(txnId);
     }, 1500);
   };
+
+  const usingSavedCard = !!selectedSavedCard;
+  const selectedCard = savedCards.find(c => c.id === selectedSavedCard);
 
   return (
     <Card className="border-primary/20 shadow-lg max-w-md mx-auto overflow-hidden">
@@ -105,56 +168,114 @@ export function DemoPaymentGateway({
                 </div>
               </div>
 
+              {/* Saved cards */}
+              {savedCards.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm">Saved Cards</Label>
+                  {savedCards.map(card => (
+                    <button
+                      key={card.id}
+                      type="button"
+                      onClick={() => setSelectedSavedCard(selectedSavedCard === card.id ? null : card.id)}
+                      className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                        selectedSavedCard === card.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/30"
+                      }`}
+                    >
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">
+                          {card.card_brand} •••• {card.card_last_four}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {card.cardholder_name} • {String(card.expiry_month).padStart(2, "0")}/{card.expiry_year}
+                        </p>
+                      </div>
+                      {selectedSavedCard === card.id && (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      )}
+                    </button>
+                  ))}
+                  {selectedSavedCard && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSavedCard(null)}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Use a new card instead
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Demo notice */}
               <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/5 p-2.5 text-xs text-warning">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 {t("payment.demoNotice", "Demo mode — no real charges. Use any card number.")}
               </div>
 
-              <div className="space-y-2">
-                <Label>{t("payment.cardNumber", "Card Number")}</Label>
-                <Input
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                  placeholder="4242 4242 4242 4242"
-                  maxLength={19}
-                  required
-                />
-              </div>
+              {/* New card form - hidden when using saved card */}
+              {!usingSavedCard && (
+                <>
+                  <div className="space-y-2">
+                    <Label>{t("payment.cardNumber", "Card Number")}</Label>
+                    <Input
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                      placeholder="4242 4242 4242 4242"
+                      maxLength={19}
+                      required={!usingSavedCard}
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label>{t("payment.cardHolder", "Cardholder Name")}</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label>{t("payment.cardHolder", "Cardholder Name")}</Label>
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="John Doe"
+                      required={!usingSavedCard}
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>{t("payment.expiry", "Expiry")}</Label>
-                  <Input
-                    value={expiry}
-                    onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                    placeholder="MM/YY"
-                    maxLength={5}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t("payment.cvc", "CVC")}</Label>
-                  <Input
-                    type="password"
-                    value={cvc}
-                    onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                    placeholder="•••"
-                    maxLength={4}
-                    required
-                  />
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>{t("payment.expiry", "Expiry")}</Label>
+                      <Input
+                        value={expiry}
+                        onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                        placeholder="MM/YY"
+                        maxLength={5}
+                        required={!usingSavedCard}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("payment.cvc", "CVC")}</Label>
+                      <Input
+                        type="password"
+                        value={cvc}
+                        onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        placeholder="•••"
+                        maxLength={4}
+                        required={!usingSavedCard}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Save card checkbox */}
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="save-card"
+                      checked={saveCard}
+                      onCheckedChange={(checked) => setSaveCard(checked === true)}
+                    />
+                    <Label htmlFor="save-card" className="text-sm cursor-pointer">
+                      Save this card for future payments
+                    </Label>
+                  </div>
+                </>
+              )}
 
               <div className="flex gap-2 pt-2">
                 <Button type="submit" className="flex-1 rounded-xl gap-2">

@@ -329,6 +329,42 @@ export type Database = {
           },
         ]
       }
+      saved_payment_methods: {
+        Row: {
+          card_brand: string
+          card_last_four: string
+          cardholder_name: string
+          created_at: string
+          expiry_month: number
+          expiry_year: number
+          id: string
+          is_default: boolean
+          user_id: string
+        }
+        Insert: {
+          card_brand?: string
+          card_last_four: string
+          cardholder_name: string
+          created_at?: string
+          expiry_month: number
+          expiry_year: number
+          id?: string
+          is_default?: boolean
+          user_id: string
+        }
+        Update: {
+          card_brand?: string
+          card_last_four?: string
+          cardholder_name?: string
+          created_at?: string
+          expiry_month?: number
+          expiry_year?: number
+          id?: string
+          is_default?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_requests: {
         Row: {
           category: string

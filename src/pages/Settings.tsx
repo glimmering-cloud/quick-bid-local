@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Moon, Sun, User, Shield, Save, Loader2, Trash2, Lock, Globe, Bell } from "lucide-react";
+import { SavedPaymentMethods } from "@/components/SavedPaymentMethods";
 import { motion } from "framer-motion";
 
 export default function Settings() {
@@ -245,6 +246,9 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Payment Methods */}
+      <SavedPaymentMethods />
 
       {/* Appearance */}
       <Card className="shadow-sm">
