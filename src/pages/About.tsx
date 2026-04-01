@@ -26,13 +26,6 @@ const Section = ({
   </section>
 );
 
-const SlideBadge = ({ number, color }: { number: number; color: string }) => (
-  <span
-    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ${color}`}
-  >
-    Slide {number}
-  </span>
-);
 
 export default function About() {
   const problems = [
@@ -88,9 +81,6 @@ export default function About() {
           <div className="absolute bottom-10 right-20 h-96 w-96 rounded-full bg-white blur-3xl" />
         </div>
         <div className="container relative max-w-5xl text-center">
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
-            <SlideBadge number={1} color="bg-white/20" />
-          </motion.div>
           <motion.h1
             className="mt-6 font-heading text-5xl font-bold text-primary-foreground md:text-7xl lg:text-8xl"
             initial="hidden"
@@ -136,7 +126,7 @@ export default function About() {
 
       {/* Problem */}
       <Section id="problem">
-        <SlideBadge number={2} color="bg-destructive" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">
           Local services are <span className="text-destructive">inefficient</span>
         </h2>
@@ -165,7 +155,7 @@ export default function About() {
 
       {/* Solution */}
       <Section className="bg-muted/50" id="solution">
-        <SlideBadge number={3} color="bg-green-600" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">
           We flip the <span className="text-green-600">marketplace</span>
         </h2>
@@ -197,7 +187,7 @@ export default function About() {
 
       {/* What Makes Us Unique */}
       <Section id="unique">
-        <SlideBadge number={5} color="bg-purple-600" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">
           What makes us <span className="text-purple-600">unique</span>
         </h2>
@@ -237,7 +227,7 @@ export default function About() {
 
       {/* Technology */}
       <Section className="bg-muted/50" id="tech">
-        <SlideBadge number={6} color="bg-amber-700" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">Technology</h2>
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {techStack.map((t, i) => (
@@ -276,7 +266,7 @@ export default function About() {
 
       {/* Impact */}
       <Section id="impact">
-        <SlideBadge number={7} color="bg-orange-600" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">Impact</h2>
         <div className="mt-12 grid grid-cols-2 gap-6 md:grid-cols-4">
           {impacts.map((imp, i) => (
@@ -338,7 +328,7 @@ export default function About() {
           <div className="absolute bottom-20 left-20 h-64 w-64 rounded-full bg-white blur-3xl" />
         </div>
         <div className="container relative max-w-4xl text-center">
-          <SlideBadge number={8} color="bg-white/20" />
+          
           <h2 className="mt-6 font-heading text-3xl font-bold text-primary-foreground md:text-5xl">
             The future of local services is real-time
           </h2>
