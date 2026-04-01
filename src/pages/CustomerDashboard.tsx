@@ -39,7 +39,7 @@ export default function CustomerDashboard() {
   const [lowestBids, setLowestBids] = useState<Record<string, number>>({});
   const [showForm, setShowForm] = useState(false);
   const [useNLP, setUseNLP] = useState(true);
-  const [demoMode, setDemoMode] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("haircut");
