@@ -220,6 +220,7 @@ export default function ProviderDashboard() {
 
       <BookingHistory role="provider" />
       <TransactionHistory role="provider" />
+      <ProviderPlatformFees />
 
       <div className="flex justify-center">
         <RaiseTicket />
