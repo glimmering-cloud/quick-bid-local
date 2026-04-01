@@ -189,7 +189,7 @@ export default function BookingConfirmation() {
           <CardContent className="p-6 space-y-4">
             <div className="space-y-3">
               {[
-                { label: t("booking.service"), value: <span className="font-medium flex items-center gap-1.5"><span>{cat.emoji}</span>{request.title}</span> },
+                { label: t("booking.service"), value: <span className="font-medium flex items-center gap-1.5"><span>{cat.emoji}</span>{request?.title || "Booked service"}</span> },
                 { label: t("booking.price"), value: <span className="font-heading text-xl font-bold text-primary">CHF {Number(booking.bids?.price || booking.final_price_chf || 0).toFixed(0)}</span> },
                 { label: <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{t("booking.locationLabel")}</span>, value: (
                   <span className="font-medium flex items-center gap-1.5">
@@ -209,11 +209,11 @@ export default function BookingConfirmation() {
                           </span>
                         )}
                       </>
-                    ) : request.location_name}
+                    ) : (request?.location_name || "Location unavailable")}
                   </span>
                 )},
-                { label: <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{t("booking.whenLabel")}</span>, value: <span className="font-medium">{format(new Date(request.requested_time), "EEE, MMM d 'at' HH:mm")}</span> },
-                { label: <span className="flex items-center gap-1.5"><User className="h-4 w-4" />{isCustomer ? t("booking.providerLabel") : t("booking.customerLabel")}</span>, value: <span className="font-medium">{counterparty?.display_name || request?.title || "—"}</span> },
+                { label: <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />{t("booking.whenLabel")}</span>, value: <span className="font-medium">{request?.requested_time ? format(new Date(request.requested_time), "EEE, MMM d 'at' HH:mm") : "Time unavailable"}</span> },
+                { label: <span className="flex items-center gap-1.5"><User className="h-4 w-4" />{isCustomer ? t("booking.providerLabel") : t("booking.customerLabel")}</span>, value: <span className="font-medium">{counterparty?.display_name || "—"}</span> },
                 { label: <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" />{t("booking.contact")}</span>, value: (
                   <span className="font-medium flex items-center gap-1.5">
                     {counterparty?.masked_phone || t("booking.notProvided")}
