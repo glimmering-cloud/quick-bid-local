@@ -54,7 +54,6 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
-        <CookieConsent />
         <BrowserRouter>
           <AuthProvider>
             <AppRoutes />
