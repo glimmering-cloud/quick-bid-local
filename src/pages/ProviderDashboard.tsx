@@ -72,6 +72,7 @@ export default function ProviderDashboard() {
 
     const myCategory = providerData?.service_category;
 
+    // Fetch all open/bidding requests matching provider's category
     let reqQuery = supabase
       .from("service_requests")
       .select("*")
@@ -80,15 +81,6 @@ export default function ProviderDashboard() {
 
     if (myCategory) {
       reqQuery = reqQuery.eq("category", myCategory);
-    }
-
-    // Filter by provider's city
-    if (providerData?.latitude && providerData?.longitude) {
-      const myCity = getCityFromCoords(providerData.latitude, providerData.longitude);
-      const cityLocationNames = getLocationNamesForCity(myCity);
-      if (cityLocationNames.length > 0) {
-        reqQuery = reqQuery.in("location_name", cityLocationNames);
-      }
     }
 
     const [{ data: reqs }, { data: bids }] = await Promise.all([
