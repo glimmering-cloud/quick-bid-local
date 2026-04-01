@@ -155,7 +155,7 @@ export default function About() {
 
       {/* Solution */}
       <Section className="bg-muted/50" id="solution">
-        <SlideBadge number={3} color="bg-green-600" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">
           We flip the <span className="text-green-600">marketplace</span>
         </h2>
