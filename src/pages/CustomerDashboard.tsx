@@ -22,14 +22,14 @@ import { ServiceMap } from "@/components/ServiceMap";
 import { RaiseTicket } from "@/components/RaiseTicket";
 import { BookingHistory } from "@/components/BookingHistory";
 import { SERVICE_CATEGORIES, getCategoryById } from "@/lib/categories";
-import { LOCATIONS, CITIES, getLocationsByCity } from "@/lib/locations";
+import { LOCATIONS, CITIES, getLocationsByCity, getCityFromCoords } from "@/lib/locations";
 import type { ServiceRequest } from "@/lib/types";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CustomerDashboard() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -42,6 +42,11 @@ export default function CustomerDashboard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("haircut");
+
+  // Determine customer's city from their profile location
+  const userCity = profile?.location_lat && profile?.location_lng
+    ? getCityFromCoords(profile.location_lat, profile.location_lng)
+    : null;
   const [selectedCity, setSelectedCity] = useState(CITIES[0]);
   const [locationIdx, setLocationIdx] = useState(0);
   const [requestedTime, setRequestedTime] = useState("");
@@ -49,6 +54,14 @@ export default function CustomerDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [providers, setProviders] = useState<any[]>([]);
   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
+
+  // Lock city to user's profile city once known
+  useEffect(() => {
+    if (userCity) {
+      setSelectedCity(userCity);
+      setLocationIdx(0);
+    }
+  }, [userCity]);
 
   const cityLocations = getLocationsByCity(selectedCity);
   const allLocations = LOCATIONS;
@@ -277,16 +290,24 @@ export default function CustomerDashboard() {
                     </div>
                     <div className="space-y-2">
                       <Label>{t("dashboard.location")}</Label>
-                      <Select value={selectedCity} onValueChange={(val) => { setSelectedCity(val); setLocationIdx(0); }}>
-                        <SelectTrigger className="w-full mb-2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CITIES.map((city) => (
-                            <SelectItem key={city} value={city}>{city}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {userCity ? (
+                        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 mb-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">{userCity}</span>
+                          <span className="text-xs text-muted-foreground ml-auto">{t("dashboard.yourCity", "Your city")}</span>
+                        </div>
+                      ) : (
+                        <Select value={selectedCity} onValueChange={(val) => { setSelectedCity(val); setLocationIdx(0); }}>
+                          <SelectTrigger className="w-full mb-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CITIES.map((city) => (
+                              <SelectItem key={city} value={city}>{city}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         {cityLocations.map((loc, i) => (
                           <button

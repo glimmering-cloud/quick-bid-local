@@ -63,3 +63,41 @@ export function getLocationsByCity(city: string) {
 export function getDefaultLocation() {
   return LOCATIONS[0];
 }
+
+/** City center coordinates for distance matching */
+const CITY_CENTERS: Record<string, { lat: number; lng: number }> = {
+  Zurich: { lat: 47.3769, lng: 8.5417 },
+  Bern: { lat: 46.9480, lng: 7.4474 },
+  Lausanne: { lat: 46.5167, lng: 6.6294 },
+  Geneva: { lat: 46.2100, lng: 6.1426 },
+  Basel: { lat: 47.5476, lng: 7.5896 },
+  Lucerne: { lat: 47.0502, lng: 8.3093 },
+  "St. Gallen": { lat: 47.4233, lng: 9.3700 },
+  Winterthur: { lat: 47.5001, lng: 8.7237 },
+  Lugano: { lat: 46.0037, lng: 8.9511 },
+  "Biel/Bienne": { lat: 47.1325, lng: 7.2467 },
+  Thun: { lat: 46.7545, lng: 7.6295 },
+  Fribourg: { lat: 46.8032, lng: 7.1513 },
+  Chur: { lat: 46.8530, lng: 9.5288 },
+  "Neuchâtel": { lat: 46.9945, lng: 6.9380 },
+  Sion: { lat: 46.2333, lng: 7.3597 },
+};
+
+/** Determine the nearest city from lat/lng coordinates */
+export function getCityFromCoords(lat: number, lng: number): string {
+  let nearest = CITIES[0];
+  let minDist = Infinity;
+  for (const [city, center] of Object.entries(CITY_CENTERS)) {
+    const d = Math.sqrt((lat - center.lat) ** 2 + (lng - center.lng) ** 2);
+    if (d < minDist) {
+      minDist = d;
+      nearest = city;
+    }
+  }
+  return nearest;
+}
+
+/** Get location names belonging to a city for DB filtering */
+export function getLocationNamesForCity(city: string): string[] {
+  return LOCATIONS.filter((l) => l.city === city).map((l) => l.name);
+}

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, ChevronRight, Zap, User, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCategoryById } from "@/lib/categories";
+import { getCityFromCoords, getLocationNamesForCity } from "@/lib/locations";
 import { BookingHistory } from "@/components/BookingHistory";
 import type { ServiceRequest } from "@/lib/types";
 import { RaiseTicket } from "@/components/RaiseTicket";
@@ -60,10 +61,10 @@ export default function ProviderDashboard() {
   const loadData = async () => {
     if (!user) return;
 
-    // Fetch provider's service category to filter requests
+    // Fetch provider's service category and location to filter requests
     const { data: providerData } = await supabase
       .from("providers")
-      .select("service_category")
+      .select("service_category, latitude, longitude")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -77,6 +78,15 @@ export default function ProviderDashboard() {
 
     if (myCategory) {
       reqQuery = reqQuery.eq("category", myCategory);
+    }
+
+    // Filter by provider's city
+    if (providerData?.latitude && providerData?.longitude) {
+      const myCity = getCityFromCoords(providerData.latitude, providerData.longitude);
+      const cityLocationNames = getLocationNamesForCity(myCity);
+      if (cityLocationNames.length > 0) {
+        reqQuery = reqQuery.in("location_name", cityLocationNames);
+      }
     }
 
     const [{ data: reqs }, { data: bids }] = await Promise.all([
