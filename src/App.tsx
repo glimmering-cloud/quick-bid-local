@@ -55,6 +55,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <BrowserRouter>
+          <CookieConsent />
           <AuthProvider>
             <AppRoutes />
           </AuthProvider>
