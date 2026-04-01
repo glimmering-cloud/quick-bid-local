@@ -296,7 +296,7 @@ export default function About() {
           <h2 className="font-heading text-3xl font-bold md:text-5xl">What we built</h2>
         </div>
         <p className="mt-3 text-lg text-muted-foreground">
-          A fully functional prototype built end-to-end during this hackathon.
+          A production-ready prototype built end-to-end during this hackathon.
         </p>
         <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {builtFeatures.map((f, i) => (
