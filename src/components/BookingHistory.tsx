@@ -6,10 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getCategoryById } from "@/lib/categories";
 import { format } from "date-fns";
-import { History, MapPin, Clock, Star, ChevronRight } from "lucide-react";
+import { History, MapPin, Clock, Star, ChevronRight, ShieldCheck, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 interface BookingHistoryProps {
   role: "customer" | "provider";
@@ -21,6 +23,8 @@ export function BookingHistory({ role }: BookingHistoryProps) {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pinInputs, setPinInputs] = useState<Record<string, string>>({});
+  const [verifying, setVerifying] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -64,6 +68,36 @@ export function BookingHistory({ role }: BookingHistoryProps) {
     setLoading(false);
   };
 
+  const handleVerifyPin = async (booking: any) => {
+    const pin = pinInputs[booking.id];
+    if (!pin || pin.length !== 4) {
+      toast.error("Please enter the 4-digit PIN from the customer");
+      return;
+    }
+
+    setVerifying(booking.id);
+
+    if (pin !== booking.verification_pin) {
+      toast.error("Incorrect PIN. Ask the customer for the correct code.");
+      setVerifying(null);
+      return;
+    }
+
+    const { error } = await supabase.from("bookings").update({
+      job_started: true,
+      job_started_at: new Date().toISOString(),
+      address_revealed: true,
+    } as any).eq("id", booking.id);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("PIN verified! Job started — precise location revealed.");
+      loadBookings();
+    }
+    setVerifying(null);
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
       case "confirmed": return "bg-primary/10 text-primary border-primary/20";
@@ -89,6 +123,7 @@ export function BookingHistory({ role }: BookingHistoryProps) {
         {bookings.slice(0, 10).map((booking, i) => {
           const req = booking.request;
           const cat = req ? getCategoryById(req.category) : null;
+          const showPinInput = role === "provider" && booking.status === "confirmed" && !booking.job_started;
           return (
             <motion.div
               key={booking.id}
@@ -97,43 +132,93 @@ export function BookingHistory({ role }: BookingHistoryProps) {
               transition={{ delay: i * 0.03 }}
             >
               <div
-                className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
-                onClick={() => navigate(`/booking/${booking.request_id}`)}
+                className={`p-3 rounded-lg border transition-colors ${showPinInput ? "" : "hover:bg-accent/50 cursor-pointer"}`}
+                onClick={() => !showPinInput && navigate(`/booking/${booking.request_id}`)}
               >
-                <div className="space-y-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {cat && <span>{cat.emoji}</span>}
-                    <span className="font-medium text-sm truncate">{req?.title || "Booking"}</span>
-                    <Badge variant="outline" className={`text-xs ${statusColor(booking.status)}`}>
-                      {booking.status}
-                    </Badge>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {cat && <span>{cat.emoji}</span>}
+                      <span className="font-medium text-sm truncate">{req?.title || "Booking"}</span>
+                      <Badge variant="outline" className={`text-xs ${statusColor(booking.status)}`}>
+                        {booking.status}
+                      </Badge>
+                      {booking.job_started && booking.status === "confirmed" && (
+                        <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/20">
+                          Job Started
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>{booking.otherPartyName}</span>
+                      {req?.location_name && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {req.location_name}
+                        </span>
+                      )}
+                      {req?.requested_time && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {format(new Date(req.requested_time), "MMM d, HH:mm")}
+                        </span>
+                      )}
+                      {booking.final_price_chf && (
+                        <span className="font-medium">CHF {Number(booking.final_price_chf).toFixed(0)}</span>
+                      )}
+                      {booking.myRating && (
+                        <span className="flex items-center gap-0.5">
+                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          {booking.myRating}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{booking.otherPartyName}</span>
-                    {req?.location_name && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {req.location_name}
-                      </span>
-                    )}
-                    {req?.requested_time && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {format(new Date(req.requested_time), "MMM d, HH:mm")}
-                      </span>
-                    )}
-                    {booking.final_price_chf && (
-                      <span className="font-medium">CHF {Number(booking.final_price_chf).toFixed(0)}</span>
-                    )}
-                    {booking.myRating && (
-                      <span className="flex items-center gap-0.5">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        {booking.myRating}
-                      </span>
-                    )}
-                  </div>
+                  {!showPinInput && (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/30 shrink-0" />
+                  )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground/30 shrink-0" />
+
+                {/* Provider PIN verification inline */}
+                {showPinInput && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Enter the 4-digit PIN from the customer to confirm & start the job:
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={pinInputs[booking.id] || ""}
+                        onChange={(e) => setPinInputs(prev => ({ ...prev, [booking.id]: e.target.value.replace(/\D/g, "") }))}
+                        placeholder="0000"
+                        className="w-24 text-center font-mono text-base tracking-[0.2em]"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleVerifyPin(booking); }}
+                        disabled={verifying === booking.id}
+                        className="rounded-xl"
+                      >
+                        {verifying === booking.id ? (
+                          <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />Verifying</>
+                        ) : (
+                          <><ShieldCheck className="mr-1 h-3.5 w-3.5" />Verify PIN</>
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/booking/${booking.request_id}`); }}
+                        className="text-xs"
+                      >
+                        Details
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           );
