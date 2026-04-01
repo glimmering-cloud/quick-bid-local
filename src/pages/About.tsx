@@ -363,13 +363,9 @@ export default function About() {
               </motion.div>
             ))}
           </div>
-          <div className="mt-12">
-            <Link to="/auth">
-              <Button size="lg" variant="secondary" className="gap-2 text-base">
-                Experience QuickServe <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
+          <p className="mt-10 text-primary-foreground/60 text-lg italic">
+            Built with ❤️ at GenAI Zurich Hackathon 2026
+          </p>
         </div>
       </section>
     </div>
