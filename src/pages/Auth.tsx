@@ -218,6 +218,23 @@ export default function Auth() {
                   minLength={6}
                 />
               </div>
+              {isSignUp && (
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="gdpr-consent"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="gdpr-consent" className="text-xs text-muted-foreground leading-relaxed">
+                    {t("gdpr.consentLabel")}{" "}
+                    <Link to="/privacy" className="underline text-primary hover:text-primary/80">{t("gdpr.privacyPolicy")}</Link>
+                    {" "}{t("gdpr.and")}{" "}
+                    <Link to="/terms" className="underline text-primary hover:text-primary/80">{t("gdpr.termsOfService")}</Link>
+                  </label>
+                </div>
+              )}
               <Button type="submit" className="w-full h-11 rounded-xl" disabled={loading}>
                 {loading ? (
                   <>

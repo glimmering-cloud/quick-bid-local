@@ -251,6 +251,9 @@ export default function Settings() {
       {/* Payment Methods */}
       <SavedPaymentMethods />
 
+      {/* Data Export (GDPR) */}
+      <DataExport />
+
       {/* Appearance */}
       <Card className="shadow-sm">
         <CardHeader>
