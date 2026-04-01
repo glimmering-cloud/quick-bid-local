@@ -138,6 +138,8 @@ export function BookingHistory({ role }: BookingHistoryProps) {
           const req = booking.request;
           const cat = req ? getCategoryById(req.category) : null;
           const showPinInput = role === "provider" && booking.status === "confirmed" && !booking.job_started;
+          const showJobStarted = role === "provider" && booking.status === "confirmed" && booking.job_started;
+          const isInteractive = showPinInput || showJobStarted;
           return (
             <motion.div
               key={booking.id}
