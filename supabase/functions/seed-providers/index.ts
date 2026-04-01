@@ -297,6 +297,8 @@ Deno.serve(async (req) => {
       bookings_created: bookingsCreated,
       admin_login: { email: adminEmail, password: adminPassword },
       cs_login: { email: csEmail, password: csPassword },
+      demo_customer: { email: custEmail, password: custPassword },
+      demo_provider: { email: provEmail, password: provPassword },
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
