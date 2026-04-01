@@ -211,7 +211,7 @@ export default function CustomerDashboard() {
           <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-1.5">
+          <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-1.5">
             <Zap className="h-3.5 w-3.5 text-warning" />
             <Label htmlFor="demo-mode" className="text-xs text-muted-foreground cursor-pointer">{t("dashboard.demo")}</Label>
             <Switch id="demo-mode" checked={demoMode} onCheckedChange={setDemoMode} />
