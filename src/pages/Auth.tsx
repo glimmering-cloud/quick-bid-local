@@ -223,39 +223,7 @@ export default function Auth() {
                 )}
               </Button>
             </form>
-            {!isSignUp && (
-              <div className="mt-5 space-y-2">
-                <p className="text-xs text-center text-muted-foreground font-medium">Quick Demo Login</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {([
-                    { label: "Demo Customer", icon: User, email: "customer@demo.quickserve.ch", color: "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10" },
-                    { label: "Demo Provider", icon: Briefcase, email: "provider@demo.quickserve.ch", color: "border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10" },
-                  ]).map((demo) => (
-                    <button
-                      key={demo.email}
-                      type="button"
-                      disabled={loading}
-                      onClick={async () => {
-                        setLoading(true);
-                        try {
-                          await signIn(demo.email, "Demo1234!");
-                          toast.success(`Signed in as ${demo.label}`);
-                        } catch {
-                          toast.error("Demo account not found. Please run the seed function first.");
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${demo.color}`}
-                    >
-                      <demo.icon className="h-3.5 w-3.5" />
-                      {demo.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="mt-4 text-center">
+            <div className="mt-5 text-center">
               <button
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"

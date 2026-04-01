@@ -204,48 +204,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- Fixed demo customer account ---
-    const custEmail = "customer@demo.quickserve.ch";
-    const custPassword = "Demo1234!";
+    // --- Demo customer & bookings ---
+    const custEmail = "demo.customer@quickserve.ch";
+    const custPassword = generatePassword();
     let customerId: string | null = null;
 
-    const oldCust = existingAdminUsers?.users?.find(u => u.email === custEmail);
-    if (oldCust) {
-      await supabase.auth.admin.updateUserById(oldCust.id, { password: custPassword });
-      await supabase.from("profiles").update({ display_name: "Anna Müller" }).eq("user_id", oldCust.id);
-      customerId = oldCust.id;
+    const { data: custAuth, error: custErr } = await supabase.auth.admin.createUser({
+      email: custEmail, password: custPassword, email_confirm: true,
+      user_metadata: { display_name: "Demo Customer", role: "customer" },
+    });
+    if (!custErr && custAuth?.user) {
+      customerId = custAuth.user.id;
     } else {
-      const { data: custAuth, error: custErr } = await supabase.auth.admin.createUser({
-        email: custEmail, password: custPassword, email_confirm: true,
-        user_metadata: { display_name: "Anna Müller", role: "customer" },
-      });
-      if (!custErr && custAuth?.user) {
-        customerId = custAuth.user.id;
-        await supabase.from("profiles").update({ display_name: "Anna Müller", location_name: "Zurich", location_lat: 47.3769, location_lng: 8.5417 }).eq("user_id", custAuth.user.id);
-      }
-    }
-
-    // --- Fixed demo provider account ---
-    const provEmail = "provider@demo.quickserve.ch";
-    const provPassword = "Demo1234!";
-    let demoProviderId: string | null = null;
-
-    const oldProv = existingAdminUsers?.users?.find(u => u.email === provEmail);
-    if (oldProv) {
-      await supabase.auth.admin.updateUserById(oldProv.id, { password: provPassword });
-      await supabase.from("profiles").update({ display_name: "Marco's Barbershop", role: "provider", location_name: "Zurich", location_lat: 47.38, location_lng: 8.54 }).eq("user_id", oldProv.id);
-      await supabase.from("providers").upsert({ user_id: oldProv.id, business_name: "Marco's Barbershop", service_category: "haircut", provider_type: "individual", latitude: 47.38, longitude: 8.54, rating: 4.8, base_price_chf: 45 }, { onConflict: "user_id" });
-      demoProviderId = oldProv.id;
-    } else {
-      const { data: provAuth, error: provErr } = await supabase.auth.admin.createUser({
-        email: provEmail, password: provPassword, email_confirm: true,
-        user_metadata: { display_name: "Marco's Barbershop", role: "provider" },
-      });
-      if (!provErr && provAuth?.user) {
-        demoProviderId = provAuth.user.id;
-        await supabase.from("profiles").update({ display_name: "Marco's Barbershop", role: "provider", location_name: "Zurich", location_lat: 47.38, location_lng: 8.54 }).eq("user_id", provAuth.user.id);
-        await supabase.from("providers").insert({ user_id: provAuth.user.id, business_name: "Marco's Barbershop", service_category: "haircut", provider_type: "individual", latitude: 47.38, longitude: 8.54, rating: 4.8, base_price_chf: 45 });
-      }
+      const existing = existingAdminUsers?.users?.find(u => u.email === custEmail);
+      if (existing) customerId = existing.id;
     }
 
     let bookingsCreated = 0;
@@ -297,8 +269,6 @@ Deno.serve(async (req) => {
       bookings_created: bookingsCreated,
       admin_login: { email: adminEmail, password: adminPassword },
       cs_login: { email: csEmail, password: csPassword },
-      demo_customer: { email: custEmail, password: custPassword },
-      demo_provider: { email: provEmail, password: provPassword },
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
