@@ -148,8 +148,8 @@ export function BookingHistory({ role }: BookingHistoryProps) {
               transition={{ delay: i * 0.03 }}
             >
               <div
-                className={`p-3 rounded-lg border transition-colors ${showPinInput ? "" : "hover:bg-accent/50 cursor-pointer"}`}
-                onClick={() => !showPinInput && navigate(`/booking/${booking.request_id}`)}
+                className={`p-3 rounded-lg border transition-colors ${isInteractive ? "" : "hover:bg-accent/50 cursor-pointer"}`}
+                onClick={() => !isInteractive && navigate(`/booking/${booking.request_id}`)}
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-1 min-w-0">
