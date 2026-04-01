@@ -13,6 +13,7 @@ import { ServiceMap } from "@/components/ServiceMap";
 import { BidRankingCard } from "@/components/BidRankingCard";
 import { LiveBiddingIndicator } from "@/components/LiveBiddingIndicator";
 import { PriceSuggestion } from "@/components/PriceSuggestion";
+import { DemoPaymentGateway } from "@/components/DemoPaymentGateway";
 import { rankBids } from "@/lib/ranking";
 import { getCategoryById } from "@/lib/categories";
 import type { ServiceRequest, Bid, Profile } from "@/lib/types";
@@ -34,6 +35,7 @@ export default function RequestDetail() {
   const [estimatedWait, setEstimatedWait] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [pendingBid, setPendingBid] = useState<BidWithProfile | null>(null);
 
   const isCustomer = request?.customer_id === user?.id;
   const isProvider = profile?.role === "provider";
