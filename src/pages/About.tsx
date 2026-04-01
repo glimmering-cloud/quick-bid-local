@@ -227,7 +227,7 @@ export default function About() {
 
       {/* Technology */}
       <Section className="bg-muted/50" id="tech">
-        <SlideBadge number={6} color="bg-amber-700" />
+        
         <h2 className="mt-4 font-heading text-3xl font-bold md:text-5xl">Technology</h2>
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {techStack.map((t, i) => (
