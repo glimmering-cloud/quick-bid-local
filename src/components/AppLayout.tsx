@@ -8,7 +8,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield } from "lucide-react";
+import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield, Wallet } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
