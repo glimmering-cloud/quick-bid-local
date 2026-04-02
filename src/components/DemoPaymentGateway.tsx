@@ -214,6 +214,10 @@ export function DemoPaymentGateway({
                   <span className="text-muted-foreground">Bank/Transaction Charges</span>
                   <span>{currency} {bankCharges.toFixed(2)}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Platform Fee ({PLATFORM_FEE_PCT}%)</span>
+                  <span>{currency} {platformFee.toFixed(2)}</span>
+                </div>
                 <div className="h-px bg-border my-1" />
                 <div className="flex justify-between">
                   <span className="font-medium">{t("payment.total", "Total")}</span>
