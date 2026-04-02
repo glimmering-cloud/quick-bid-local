@@ -35,6 +35,7 @@ interface DemoPaymentGatewayProps {
 
 const CONVENIENCE_FEE_PCT = 2;
 const BANK_CHARGE_RATE = 0.5; // 0.5% demo bank charges
+const PLATFORM_FEE_PCT = 1; // 1% platform fee deducted from provider
 
 export function DemoPaymentGateway({
   amount,
@@ -62,8 +63,9 @@ export function DemoPaymentGateway({
   const serviceAmount = amount;
   const convenienceFee = parseFloat((serviceAmount * CONVENIENCE_FEE_PCT / 100).toFixed(2));
   const bankCharges = parseFloat((serviceAmount * BANK_CHARGE_RATE / 100).toFixed(2));
+  const platformFee = parseFloat((serviceAmount * PLATFORM_FEE_PCT / 100).toFixed(2));
   const totalCharged = parseFloat((serviceAmount + convenienceFee + bankCharges).toFixed(2));
-  const providerPayout = parseFloat((serviceAmount - bankCharges).toFixed(2));
+  const providerPayout = parseFloat((serviceAmount - bankCharges - platformFee).toFixed(2));
 
   useEffect(() => {
     if (user) loadSavedCards();
@@ -155,6 +157,38 @@ export function DemoPaymentGateway({
         status: "completed",
         currency,
       });
+
+      // Credit provider wallet
+      if (providerId) {
+        const { data: existingWallet } = await supabase
+          .from("provider_wallets" as any)
+          .select("id, balance, total_earned, total_platform_fees")
+          .eq("user_id", providerId)
+          .maybeSingle();
+
+        if (existingWallet) {
+          await supabase.from("provider_wallets" as any).update({
+            balance: Number((existingWallet as any).balance) + providerPayout,
+            total_earned: Number((existingWallet as any).total_earned) + providerPayout,
+            total_platform_fees: Number((existingWallet as any).total_platform_fees) + platformFee,
+          } as any).eq("user_id", providerId);
+        } else {
+          await supabase.from("provider_wallets" as any).insert({
+            user_id: providerId,
+            balance: providerPayout,
+            total_earned: providerPayout,
+            total_platform_fees: platformFee,
+          } as any);
+        }
+
+        // Send notification to provider about earnings
+        await supabase.from("notifications").insert({
+          user_id: providerId,
+          request_id: requestId,
+          type: "payment_received",
+          message: `💰 You earned ${currency} ${providerPayout.toFixed(2)} (after ${PLATFORM_FEE_PCT}% platform fee). Funds added to your wallet.`,
+        } as any);
+      }
     }
 
     setStep("success");
@@ -211,6 +245,10 @@ export function DemoPaymentGateway({
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Bank/Transaction Charges</span>
                   <span>{currency} {bankCharges.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Platform Fee ({PLATFORM_FEE_PCT}%)</span>
+                  <span>{currency} {platformFee.toFixed(2)}</span>
                 </div>
                 <div className="h-px bg-border my-1" />
                 <div className="flex justify-between">
