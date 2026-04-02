@@ -63,8 +63,9 @@ export function DemoPaymentGateway({
   const serviceAmount = amount;
   const convenienceFee = parseFloat((serviceAmount * CONVENIENCE_FEE_PCT / 100).toFixed(2));
   const bankCharges = parseFloat((serviceAmount * BANK_CHARGE_RATE / 100).toFixed(2));
+  const platformFee = parseFloat((serviceAmount * PLATFORM_FEE_PCT / 100).toFixed(2));
   const totalCharged = parseFloat((serviceAmount + convenienceFee + bankCharges).toFixed(2));
-  const providerPayout = parseFloat((serviceAmount - bankCharges).toFixed(2));
+  const providerPayout = parseFloat((serviceAmount - bankCharges - platformFee).toFixed(2));
 
   useEffect(() => {
     if (user) loadSavedCards();
