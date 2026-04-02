@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
+import ProviderAccounts from "./pages/ProviderAccounts";
 import RequestDetail from "./pages/RequestDetail";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import Settings from "./pages/Settings";
