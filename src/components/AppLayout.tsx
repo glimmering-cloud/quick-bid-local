@@ -58,15 +58,28 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </Button>
             </Link>
             {user && profile && (
-              <Link to={dashboardPath}>
-                <Button
-                  variant={isOnDashboard ? "secondary" : "ghost"}
-                  size="sm"
-                >
-                  <LayoutDashboard className="mr-1.5 h-4 w-4" />
-                  {t("nav.dashboard")}
-                </Button>
-              </Link>
+              <>
+                <Link to={dashboardPath}>
+                  <Button
+                    variant={isOnDashboard && location.pathname !== "/provider/accounts" ? "secondary" : "ghost"}
+                    size="sm"
+                  >
+                    <LayoutDashboard className="mr-1.5 h-4 w-4" />
+                    {t("nav.dashboard")}
+                  </Button>
+                </Link>
+                {profile.role === "provider" && (
+                  <Link to="/provider/accounts">
+                    <Button
+                      variant={location.pathname === "/provider/accounts" ? "secondary" : "ghost"}
+                      size="sm"
+                    >
+                      <Wallet className="mr-1.5 h-4 w-4" />
+                      Accounts
+                    </Button>
+                  </Link>
+                )}
+              </>
             )}
             {user && isStaff && (
               <Link to="/management">
