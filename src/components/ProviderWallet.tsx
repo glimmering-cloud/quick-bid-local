@@ -50,7 +50,17 @@ export function ProviderWallet() {
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
-    setWallet(data as any);
+    if (data) {
+      setWallet(data as any);
+    } else {
+      // Create a wallet row for the provider if none exists
+      const { data: newWallet } = await supabase
+        .from("provider_wallets" as any)
+        .insert({ user_id: user.id } as any)
+        .select()
+        .single();
+      setWallet(newWallet as any ?? { balance: 0, total_earned: 0, total_platform_fees: 0, total_withdrawn: 0 });
+    }
     setLoading(false);
   };
 
