@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
+import ProviderAccounts from "./pages/ProviderAccounts";
 import RequestDetail from "./pages/RequestDetail";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import Settings from "./pages/Settings";
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/auth" element={user ? <Navigate to={profile?.role === "provider" ? "/provider" : "/dashboard"} replace /> : <Auth />} />
         <Route path="/dashboard" element={<ProtectedRoute>{profile?.role === "provider" ? <Navigate to="/provider" replace /> : <CustomerDashboard />}</ProtectedRoute>} />
         <Route path="/provider" element={<ProtectedRoute>{profile?.role === "customer" ? <Navigate to="/dashboard" replace /> : <ProviderDashboard />}</ProtectedRoute>} />
+        <Route path="/provider/accounts" element={<ProtectedRoute>{profile?.role === "customer" ? <Navigate to="/dashboard" replace /> : <ProviderAccounts />}</ProtectedRoute>} />
         <Route path="/request/:id" element={<ProtectedRoute><RequestDetail /></ProtectedRoute>} />
         <Route path="/booking/:requestId" element={<ProtectedRoute><BookingConfirmation /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

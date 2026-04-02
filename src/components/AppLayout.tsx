@@ -8,7 +8,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AccessibilityMenu } from "@/components/AccessibilityMenu";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield } from "lucide-react";
+import { Zap, LogOut, LayoutDashboard, Settings, Menu, X, Shield, Wallet } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,15 +58,28 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </Button>
             </Link>
             {user && profile && (
-              <Link to={dashboardPath}>
-                <Button
-                  variant={isOnDashboard ? "secondary" : "ghost"}
-                  size="sm"
-                >
-                  <LayoutDashboard className="mr-1.5 h-4 w-4" />
-                  {t("nav.dashboard")}
-                </Button>
-              </Link>
+              <>
+                <Link to={dashboardPath}>
+                  <Button
+                    variant={isOnDashboard && location.pathname !== "/provider/accounts" ? "secondary" : "ghost"}
+                    size="sm"
+                  >
+                    <LayoutDashboard className="mr-1.5 h-4 w-4" />
+                    {t("nav.dashboard")}
+                  </Button>
+                </Link>
+                {profile.role === "provider" && (
+                  <Link to="/provider/accounts">
+                    <Button
+                      variant={location.pathname === "/provider/accounts" ? "secondary" : "ghost"}
+                      size="sm"
+                    >
+                      <Wallet className="mr-1.5 h-4 w-4" />
+                      Accounts
+                    </Button>
+                  </Link>
+                )}
+              </>
             )}
             {user && isStaff && (
               <Link to="/management">
@@ -152,6 +165,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <LayoutDashboard className="h-4 w-4" />
                   {t("nav.dashboard")}
                 </Link>
+                {profile.role === "provider" && (
+                  <Link
+                    to="/provider/accounts"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Accounts
+                  </Link>
+                )}
                 {isStaff && (
                   <Link
                     to="/management"
