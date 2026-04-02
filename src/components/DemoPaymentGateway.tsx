@@ -157,6 +157,38 @@ export function DemoPaymentGateway({
         status: "completed",
         currency,
       });
+
+      // Credit provider wallet
+      if (providerId) {
+        const { data: existingWallet } = await supabase
+          .from("provider_wallets" as any)
+          .select("id, balance, total_earned, total_platform_fees")
+          .eq("user_id", providerId)
+          .maybeSingle();
+
+        if (existingWallet) {
+          await supabase.from("provider_wallets" as any).update({
+            balance: Number((existingWallet as any).balance) + providerPayout,
+            total_earned: Number((existingWallet as any).total_earned) + providerPayout,
+            total_platform_fees: Number((existingWallet as any).total_platform_fees) + platformFee,
+          } as any).eq("user_id", providerId);
+        } else {
+          await supabase.from("provider_wallets" as any).insert({
+            user_id: providerId,
+            balance: providerPayout,
+            total_earned: providerPayout,
+            total_platform_fees: platformFee,
+          } as any);
+        }
+
+        // Send notification to provider about earnings
+        await supabase.from("notifications").insert({
+          user_id: providerId,
+          request_id: requestId,
+          type: "payment_received",
+          message: `💰 You earned ${currency} ${providerPayout.toFixed(2)} (after ${PLATFORM_FEE_PCT}% platform fee). Funds added to your wallet.`,
+        } as any);
+      }
     }
 
     setStep("success");
