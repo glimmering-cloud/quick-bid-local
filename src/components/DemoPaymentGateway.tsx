@@ -35,6 +35,7 @@ interface DemoPaymentGatewayProps {
 
 const CONVENIENCE_FEE_PCT = 2;
 const BANK_CHARGE_RATE = 0.5; // 0.5% demo bank charges
+const PLATFORM_FEE_PCT = 1; // 1% platform fee deducted from provider
 
 export function DemoPaymentGateway({
   amount,
