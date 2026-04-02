@@ -165,6 +165,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <LayoutDashboard className="h-4 w-4" />
                   {t("nav.dashboard")}
                 </Link>
+                {profile.role === "provider" && (
+                  <Link
+                    to="/provider/accounts"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-secondary transition-colors"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Accounts
+                  </Link>
+                )}
                 {isStaff && (
                   <Link
                     to="/management"

@@ -225,8 +225,6 @@ export default function ProviderDashboard() {
       </div>
 
       <BookingHistory role="provider" />
-      <TransactionHistory role="provider" />
-      <ProviderWallet />
 
       <div className="flex justify-center">
         <RaiseTicket />
