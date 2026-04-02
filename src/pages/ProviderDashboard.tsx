@@ -10,7 +10,7 @@ import { getCategoryById } from "@/lib/categories";
 
 import { BookingHistory } from "@/components/BookingHistory";
 import { TransactionHistory } from "@/components/TransactionHistory";
-import { ProviderPlatformFees } from "@/components/ProviderPlatformFees";
+import { ProviderWallet } from "@/components/ProviderWallet";
 import type { ServiceRequest } from "@/lib/types";
 import { RaiseTicket } from "@/components/RaiseTicket";
 import { format } from "date-fns";
